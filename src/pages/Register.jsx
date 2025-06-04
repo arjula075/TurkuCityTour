@@ -1,13 +1,19 @@
 // src/pages/Register.jsx
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+import React, { useState } from 'react';
+import { useAuthContext } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
-    const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const { supabase } = useAuthContext();
+    const navigate = useNavigate();
+
+    const [form, setForm] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        password: '',
+    });
+    const [error, setError] = useState(null);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,42 +21,89 @@ export default function Register() {
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
+        setError(null);
 
-        const { email, password, firstName, lastName } = form;
-
-        // Register user with Supabase Auth
         const { data, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                data: {
-                    first_name: firstName,
-                    last_name: lastName,
-                },
-            },
+            email: form.email,
+            password: form.password,
         });
 
         if (signUpError) {
             setError(signUpError.message);
-        } else {
-            setSuccess('Registration successful! Check your email to confirm.');
+            return;
         }
+
+        const userId = data?.user?.id;
+
+        if (!userId) {
+            setError('Failed to get user ID from signup');
+            return;
+        }
+
+        // Insert user data into public.users
+        await supabase.rpc('create_user_profile', {
+            uid: userId,
+            first_name: form.first_name,
+            last_name: form.last_name,
+        });
+
+
+        // Optional: inform user to check email if confirmation is required
+        alert('Registered! Please check your email to confirm your account.');
+
+        navigate('/');
     };
 
+
+
     return (
-        <div className="max-w-md mx-auto mt-10 p-4 border rounded shadow">
-            <h2 className="text-2xl mb-4 font-semibold">Register</h2>
-            <form onSubmit={handleRegister} className="space-y-3">
-                <input name="firstName" type="text" placeholder="First Name" required className="w-full p-2 border rounded" onChange={handleChange} />
-                <input name="lastName" type="text" placeholder="Last Name" required className="w-full p-2 border rounded" onChange={handleChange} />
-                <input name="email" type="email" placeholder="Email Address" required className="w-full p-2 border rounded" onChange={handleChange} />
-                <input name="password" type="password" placeholder="Password" required className="w-full p-2 border rounded" onChange={handleChange} />
-                <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Register</button>
+        <div className="p-4 max-w-md mx-auto">
+            <h1 className="text-xl mb-4">Register</h1>
+            <form onSubmit={handleRegister} className="flex flex-col gap-4">
+                <input
+                    type="text"
+                    name="first_name"
+                    placeholder="First name"
+                    value={form.first_name}
+                    onChange={handleChange}
+                    required
+                    className="border px-3 py-2 rounded"
+                />
+                <input
+                    type="text"
+                    name="last_name"
+                    placeholder="Last name"
+                    value={form.last_name}
+                    onChange={handleChange}
+                    required
+                    className="border px-3 py-2 rounded"
+                />
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email address"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className="border px-3 py-2 rounded"
+                />
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                    className="border px-3 py-2 rounded"
+                />
+                {error && <p className="text-red-600">{error}</p>}
+                <button
+                    type="submit"
+                    className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                    Register
+                </button>
             </form>
-            {error && <p className="text-red-600 mt-2">{error}</p>}
-            {success && <p className="text-green-600 mt-2">{success}</p>}
         </div>
     );
 }
