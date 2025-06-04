@@ -1,27 +1,19 @@
+// src/__tests__/App.test.jsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from '../App';
+import { AuthContext } from '../contexts/AuthContext';
 
-import { vi } from 'vitest';
+describe('App routing', () => {
+    test('renders login page by default', () => {
+        render(
+            <AuthContext.Provider value={{ supabase: {}, user: null }}>
+                <App />
+            </AuthContext.Provider>
+        );
 
-// Mock Supabase
-vi.mock('@supabase/supabase-js', () => ({
-    createClient: () => ({
-        auth: {
-            getSession: () => Promise.resolve({ data: { session: null } }),
-            onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
-            signInWithOAuth: vi.fn()
-        }
-    })
-}));
-
-vi.mock('../contexts/AuthContext', () => ({
-    AuthProvider: ({ children }) => <div>{children}</div>,
-    useAuthContext: () => ({ user: null, supabase: {} })
-}));
-
-test('renders login page by default', () => {
-    render(<App />);
-    expect(screen.getByText(/login with magic link/i)).toBeInTheDocument();
+        // Better: match the heading
+        expect(screen.getByRole('heading', { name: /login/i })).toBeInTheDocument();
+    });
 
 });
