@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Login from './pages/Login';
 import MapView from './pages/MapView';
 import FinalMessage from './pages/FinalMessage';
+import Register from './pages/Register';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           <Route path="/map" element={<MapView />} />
           <Route path="/complete" element={<FinalMessage />} />
         </Routes>
