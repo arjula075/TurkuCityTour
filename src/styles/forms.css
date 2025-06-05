@@ -14,3 +14,7 @@
 .button-blue {
     @apply bg-blue-500 text-white;
 }
+
+.form-heading {
+    @apply text-2xl font-semibold mb-6 text-center;
+}

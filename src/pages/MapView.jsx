@@ -20,7 +20,7 @@ export default function MapView() {
 
   return (
       <div className="p-4">
-        <h2 className="text-lg mb-2">
+        <h2 className="form-heading">
           Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
         </h2>
         {location ? (
