@@ -67,7 +67,7 @@ export default function Register() {
                     value={form.first_name}
                     onChange={handleChange}
                     required
-                    className="border px-3 py-2 rounded"
+                    className="input-base"
                 />
                 <input
                     type="text"
@@ -76,7 +76,7 @@ export default function Register() {
                     value={form.last_name}
                     onChange={handleChange}
                     required
-                    className="border px-3 py-2 rounded"
+                    className="input-base"
                 />
                 <input
                     type="email"
@@ -85,7 +85,7 @@ export default function Register() {
                     value={form.email}
                     onChange={handleChange}
                     required
-                    className="border px-3 py-2 rounded"
+                    className="input-base"
                 />
                 <input
                     type="password"
@@ -94,12 +94,12 @@ export default function Register() {
                     value={form.password}
                     onChange={handleChange}
                     required
-                    className="border px-3 py-2 rounded"
+                    className="input-base"
                 />
                 {error && <p className="text-red-600">{error}</p>}
                 <button
                     type="submit"
-                    className="bg-green-600 text-white px-4 py-2 rounded"
+                    className="button-base button-green"
                 >
                     Register
                 </button>
