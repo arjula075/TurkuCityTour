@@ -1,20 +1,3 @@
-/* src/styles/forms.css */
-.input-base {
-    @apply border px-4 py-3 text-base rounded-md w-full;
-}
-
-.button-base {
-    @apply px-6 py-3 text-base rounded-md w-full;
-}
-
-.button-green {
-    @apply bg-green-600 text-white;
-}
-
-.button-blue {
-    @apply bg-blue-500 text-white;
-}
-
-.form-heading {
-    @apply text-2xl font-semibold mb-6 text-center;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
