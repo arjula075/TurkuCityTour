@@ -20,11 +20,9 @@ vi.mock("react-router-dom", async () => {
 describe("Register Page", () => {
     it("renders Register form", () => {
         render(
-            <BrowserRouter>
                 <AuthContext.Provider value={{ register: vi.fn(), user: null }}>
                     <Register />
                 </AuthContext.Provider>
-            </BrowserRouter>
         );
 
         expect(screen.getAllByText(/register/i).length).toBeGreaterThan(0);

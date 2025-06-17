@@ -7,6 +7,7 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const AuthContext = createContext();
+export { AuthContext };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

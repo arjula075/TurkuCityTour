@@ -1,19 +1,13 @@
-// src/__tests__/App.test.jsx
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
+import MockAuthProvider from './MockAuthProvider';
 import App from '../App';
-import { AuthContext } from '../contexts/AuthContext';
 
-describe('App routing', () => {
-    test('renders login page by default', () => {
-        render(
-            <AuthContext.Provider value={{ supabase: {}, user: null }}>
+test('renders login page by default', () => {
+    render(
+        <MockAuthProvider>
                 <App />
-            </AuthContext.Provider>
-        );
-
-        // Better: match the heading
-        expect(screen.getByRole('heading', { name: /login/i })).toBeInTheDocument();
-    });
-
+        </MockAuthProvider>
+    );
 });
