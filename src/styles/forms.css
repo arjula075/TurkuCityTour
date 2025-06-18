@@ -1,9 +1,13 @@
-@import 'components.css'; /* Optional: import custom styles */
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+.btn-pill2 {
+    @apply inline-block px-6 py-2 rounded-full text-white bg-blue-600 hover:bg-blue-700 font-medium transition;
+}
 
+.input-gray {
+    @apply shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight;
+
+}
 
 
 

@@ -39,7 +39,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="input-base"
+                    className="input-gray"
                 />
                 <input
                     type="password"
@@ -47,10 +47,10 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="input-base"
+                    className="input-gray"
                 />
                 {error && <p className="text-red-600">{error}</p>}
-                <button className="button-base button-green"
+                <button className="btn-pill2"
                     type="submit"
 
                 >
