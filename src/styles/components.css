@@ -1,0 +1,5 @@
+/* src/styles/components.css */
+.btn-pill {
+    @apply inline-block px-6 py-2 rounded-full text-white bg-blue-600 hover:bg-blue-700 font-medium transition;
+}
+

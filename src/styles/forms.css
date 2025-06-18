@@ -1,3 +1,9 @@
+@import 'components.css'; /* Optional: import custom styles */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+
+

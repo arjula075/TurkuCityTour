@@ -44,7 +44,7 @@ export default function MapView() {
             <div className="mt-6 w-full max-w-md">
                 <button
                     onClick={handleLogout}
-                    className="w-full bg-red-500 text-white text-lg font-medium py-3 px-6 rounded-lg shadow hover:bg-red-600 transition"
+                    className="btn-pill"
                 >
                     Log Out
                 </button>
