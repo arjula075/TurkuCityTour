@@ -44,7 +44,7 @@ export default function MapView() {
             <div className="mt-6 w-full max-w-md">
                 <button
                     onClick={handleLogout}
-                    className="btn-pill"
+                    class="btn-pill"
                 >
                     Log Out
                 </button>
