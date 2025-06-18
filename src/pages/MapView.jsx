@@ -19,36 +19,36 @@ export default function MapView() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        navigate('/'); // Adjust this path if your login route is different
+        navigate('/login');
     };
 
     return (
-        <div className="relative p-4 min-h-screen bg-white">
-            {/* Log Out Button */}
-            <div className="absolute top-4 right-4 z-50">
-                <button
-                    onClick={handleLogout}
-                    className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
-                >
-                    Log Out
-                </button>
-            </div>
-
-            <h2 className="form-heading">
+        <div className="flex flex-col items-center p-4 min-h-screen bg-white">
+            <h2 className="text-xl font-semibold mb-4 text-center">
                 Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
             </h2>
 
             {location ? (
                 <iframe
-                    width="100%"
-                    height="400"
+                    className="w-full max-w-md h-64 rounded-md shadow-md"
                     loading="lazy"
                     allowFullScreen
                     src={`https://www.google.com/maps?q=${location.lat},${location.lng}&z=15&output=embed`}
+                    title="User Location Map"
                 ></iframe>
             ) : (
-                <p>Getting your location...</p>
+                <p className="text-gray-600">Getting your location...</p>
             )}
+
+            {/* Log Out Button Below Map */}
+            <div className="mt-6 w-full max-w-md">
+                <button
+                    onClick={handleLogout}
+                    className="w-full bg-red-500 text-white text-lg font-medium py-3 px-6 rounded-lg shadow hover:bg-red-600 transition"
+                >
+                    Log Out
+                </button>
+            </div>
         </div>
     );
 }
