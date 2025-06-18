@@ -8,11 +8,20 @@ export default function MapView() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!navigator.geolocation) return;
+        if (!navigator.geolocation) {
+            // Fallback immediately if geolocation isn't supported
+            setLocation({ lat: 52.520008, lng: 13.404954 }); // Berlin
+            return;
+        }
+
         navigator.geolocation.getCurrentPosition(
             (position) =>
                 setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
-            (error) => console.error('Location error:', error),
+            (error) => {
+                console.error('Location error:', error);
+                // Fallback to Berlin if error occurs
+                setLocation({ lat: 52.520008, lng: 13.404954 });
+            },
             { enableHighAccuracy: true }
         );
     }, []);
@@ -23,7 +32,7 @@ export default function MapView() {
     };
 
     return (
-        <div className="flex flex-col items-center p-4 min-h-screen bg-white">
+        <div className="flex flex-col items-center p-4 bg-white">
             <h2 className="text-5xl font-semibold mb-4 text-center">
                 Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
             </h2>
@@ -40,11 +49,10 @@ export default function MapView() {
                 <p className="text-gray-600">Getting your location...</p>
             )}
 
-            {/* Log Out Button Below Map */}
             <div className="mt-6 w-full max-w-md">
                 <button
                     onClick={handleLogout}
-                    class="btn-pill2"
+                    className="btn-pill2"
                 >
                     Log Out
                 </button>
