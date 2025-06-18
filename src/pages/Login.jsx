@@ -29,8 +29,8 @@ export default function Login() {
     };
 
     return (
-        <div className="p-4 max-w-md mx-auto">
-            <h1 className="text-3xl mb-4">Login</h1>
+        <div className="p-4 mx-auto">
+            <h1 className="text-6xl mb-4">Login</h1>
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
                 <input
@@ -58,9 +58,9 @@ export default function Login() {
                 </button>
             </form>
 
-            <p className="mt-4 text-2xl  text-center">
+            <p className="mt-4 text-4xl  text-center">
                 Don't have an account?{' '}
-                <Link to="/register" className="text-blue-600 hover:underline text-3xl">
+                <Link to="/register" className="text-blue-600 hover:underline text-4xl">
                     Register here
                 </Link>
             </p>
