@@ -30,7 +30,7 @@ export default function MapView() {
 
             {location ? (
                 <iframe
-                    className="w-full h-64 rounded-md shadow-md"
+                    className="w-full h-[40vh] rounded-md shadow-md"
                     loading="lazy"
                     allowFullScreen
                     src={`https://www.google.com/maps?q=${location.lat},${location.lng}&z=15&output=embed`}
