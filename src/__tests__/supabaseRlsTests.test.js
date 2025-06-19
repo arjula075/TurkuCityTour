@@ -1,191 +1,137 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+// src/__tests__/supabaseRlsTests.test.js
 import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../services/supabaseClient'; // Your regular client with anon key
 import { v4 as uuidv4 } from 'uuid';
-import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.test' });
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = createClient(
-    process.env.VITE_SUPABASE_URL,
-    process.env.VITE_SUPABASE_ANON_KEY
-);
+const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-let adminSession;
-let adminUserId;
-let regularUserId;
-let testLocationId;
+// User credentials from env
+const ADMIN_EMAIL = process.env.VITE_ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.VITE_ADMIN_PASSWORD;
+const USER_EMAIL = process.env.VITE_USER1_EMAIL;
+const USER_PASSWORD = process.env.VITE_USER_PASSWORD || 'TestUserPass123!';
+const UUID = "2e9443a2-bfac-4432-bb2d-bccc9f1124d2";
 
-describe('Supabase RLS Tests', () => {
-    beforeAll(async () => {
-        console.log('Signing in as admin...');
-        const { data: adminData, error: adminError } = await supabase.auth.signInWithPassword({
-            email: process.env.VITE_ADMIN_EMAIL,
-            password: process.env.VITE_ADMIN_PASSWORD,
+let insertedAnswerId = null;
+
+beforeAll(async () => {
+    // Use the admin client to create normal test user if it doesn't exist
+    const { data: existingUser, error: fetchError } = await supabaseAdmin.auth.admin.listUsers();
+
+    if (fetchError) throw new Error('Failed to fetch users: ' + fetchError.message);
+
+    const userExists = existingUser.users.some((u) => u.email === USER_EMAIL);
+
+    if (!userExists) {
+        const { user, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email: USER_EMAIL,
+            password: USER_PASSWORD,
+            email_confirm: true, // Automatically confirm email so user is active
         });
-        if (adminError) throw adminError;
-        adminSession = adminData.session;
-        adminUserId = adminData.user.id;
+        if (createError) throw new Error('Failed to create test user: ' + createError.message);
+    }
 
-        console.log('Registering test user...');
-        const { data: userData, error: userError } = await supabase.auth.signUp({
-            email: `testuser-${uuidv4()}@gmail.com`,
-            password: 'password123',
+    // Also make sure admin user exists and is confirmed (optional)
+    // Assuming your admin user is already set up manually
+
+    // Sign out any user to start fresh
+    await supabase.auth.signOut();
+});
+
+afterAll(async () => {
+    // Sign out after tests
+    await supabase.auth.signOut();
+});
+
+describe('RLS Policy Tests on Answers Table', () => {
+    const testAnswer = {
+        question_id: UUID, // Adjust this to match a real question ID
+        answer_text: 'RLS Test Answer',
+        is_correct: false,
+    };
+
+    test('authenticated user can SELECT from answers', async () => {
+        const { error: loginError } = await supabase.auth.signInWithPassword({
+            email: USER_EMAIL,
+            password: USER_PASSWORD,
         });
-        if (userError) throw userError;
-        regularUserId = userData.user.id;
 
-        console.log('Setting admin session...');
-        await supabase.auth.setSession({ access_token: adminSession.access_token });
+        expect(loginError).toBeNull();
 
-        console.log('Inserting test location...');
-        const { data: locData, error: locError } = await supabase
-            .from('locations')
-            .insert([{ name: 'Test Location', latitude: 60.45, longitude: 22.26 }])
-            .select();
-        if (locError) throw locError;
-        testLocationId = locData[0].id;
+        const { data, error } = await supabase.from('answers').select('*');
+        expect(error).toBeNull();
+        expect(Array.isArray(data)).toBe(true);
     });
 
-    afterAll(async () => {
-        console.log('Cleaning up test data...');
-        await supabase.from('user_progress').delete().eq('user_id', regularUserId);
-        await supabase.from('hints').delete().eq('location_id', testLocationId);
-        await supabase.from('questions').delete().eq('location_id', testLocationId);
-        await supabase.from('locations').delete().eq('id', testLocationId);
+    test('non-admin user cannot INSERT into answers', async () => {
+        const { error } = await supabase.from('answers').insert([testAnswer]);
+        expect(error).not.toBeNull();
+        expect(error.message).toMatch(/row-level security/i);
     });
 
-    describe('Regular User', () => {
-        it('should read all hints', async () => {
-            console.log('Regular user: reading all hints...');
-            const { data, error } = await supabase.from('hints').select('*');
-            expect(error).toBeNull();
-            expect(data).toBeInstanceOf(Array);
+    test('admin user can INSERT into answers', async () => {
+        await supabase.auth.signInWithPassword({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
         });
 
-        it('should read all questions', async () => {
-            console.log('Regular user: reading all questions...');
-            const { data, error } = await supabase.from('questions').select('*');
-            expect(error).toBeNull();
-            expect(data).toBeInstanceOf(Array);
-        });
+        const { data, error } = await supabase.from('answers').insert([testAnswer]).select();
 
-        it('should insert and read own user_progress', async () => {
-            console.log('Regular user: inserting own user_progress...');
-            const progress = {
-                user_id: regularUserId,
-                location_id: testLocationId,
-                hints_used: 2,
-                answered_correctly: false,
-            };
-            const { error: insertError } = await supabase
-                .from('user_progress')
-                .insert([progress]);
-            expect(insertError).toBeNull();
-
-            console.log('Regular user: reading own user_progress...');
-            const { data, error } = await supabase
-                .from('user_progress')
-                .select('*')
-                .eq('user_id', regularUserId);
-            expect(error).toBeNull();
-            expect(data.length).toBeGreaterThan(0);
-        });
-
-        it('should not read other users user_progress', async () => {
-            console.log('Regular user: attempting to read other users\' user_progress...');
-            const { data, error } = await supabase
-                .from('user_progress')
-                .select('*')
-                .neq('user_id', regularUserId);
-            expect(error).toBeNull();
-            expect(data.length).toBe(0);
-        });
+        expect(error).toBeNull();
+        expect(data?.[0]?.answer_text).toBe(testAnswer.answer_text);
+        insertedAnswerId = data?.[0]?.id;
+        expect(insertedAnswerId).toBeDefined();
     });
 
-    describe('Admin User', () => {
-        it('should perform full CRUD on hints', async () => {
-            console.log('Admin user: performing CRUD on hints...');
-            const hint = {
-                location_id: testLocationId,
-                hint_text: 'Test hint',
-                hint_order: 1,
-            };
-            const { data: insertData, error: insertError } = await supabase
-                .from('hints')
-                .insert([hint])
-                .select();
-            expect(insertError).toBeNull();
-
-            const hintId = insertData[0].id;
-
-            const { error: updateError } = await supabase
-                .from('hints')
-                .update({ hint_text: 'Updated test hint' })
-                .eq('id', hintId);
-            expect(updateError).toBeNull();
-
-            const { error: deleteError } = await supabase
-                .from('hints')
-                .delete()
-                .eq('id', hintId);
-            expect(deleteError).toBeNull();
+    test('non-admin user cannot UPDATE answers', async () => {
+        await supabase.auth.signInWithPassword({
+            email: USER_EMAIL,
+            password: USER_PASSWORD,
         });
 
-        it('should perform full CRUD on questions', async () => {
-            console.log('Admin user: performing CRUD on questions...');
-            const question = {
-                location_id: testLocationId,
-                question_text: 'Test question',
-                correct_answer: 'Test answer',
-            };
-            const { data: insertData, error: insertError } = await supabase
-                .from('questions')
-                .insert([question])
-                .select();
-            expect(insertError).toBeNull();
+        const { data, error, status, statusText } = await supabase
+            .from('answers')
+            .update({ answer_text: 'Unauthorized Update' })
+            .eq('id', insertedAnswerId)
+            .select(); // ← Important: returns matched rows
 
-            const questionId = insertData[0].id;
+        console.log('Update response:', { data, error, status, statusText });
 
-            const { error: updateError } = await supabase
-                .from('questions')
-                .update({ question_text: 'Updated test question' })
-                .eq('id', questionId);
-            expect(updateError).toBeNull();
+        // Now assert based on expected behavior
+        expect(error).toBeNull(); // ← still no error
+        expect(data).toEqual([]); // ← nothing was updated
+    });
 
-            const { error: deleteError } = await supabase
-                .from('questions')
-                .delete()
-                .eq('id', questionId);
-            expect(deleteError).toBeNull();
+    test('non-admin user cannot DELETE answers', async () => {
+        await supabase.auth.signInWithPassword({
+            email: USER_EMAIL,
+            password: USER_PASSWORD,
         });
 
-        it('should perform full CRUD on user_progress', async () => {
-            console.log('Admin user: performing CRUD on user_progress...');
-            const progress = {
-                user_id: regularUserId,
-                location_id: testLocationId,
-                hints_used: 2,
-                answered_correctly: false,
-            };
-            const { data: insertData, error: insertError } = await supabase
-                .from('user_progress')
-                .insert([progress])
-                .select();
-            expect(insertError).toBeNull();
+        const { data, error, status } = await supabase
+            .from('answers')
+            .delete()
+            .eq('id', insertedAnswerId)
+            .select(); // This will return deleted rows if allowed
 
-            const progressId = insertData[0].id;
+        console.log('Delete response:', { data, error, status });
 
-            const { error: updateError } = await supabase
-                .from('user_progress')
-                .update({ hints_used: 3 })
-                .eq('id', progressId);
-            expect(updateError).toBeNull();
+        // Expect no rows were deleted
+        expect(error).toBeNull();       // No error is expected
+        expect(data).toEqual([]);       // Empty array = no rows deleted
+    });
 
-            const { error: deleteError } = await supabase
-                .from('user_progress')
-                .delete()
-                .eq('id', progressId);
-            expect(deleteError).toBeNull();
+
+    test('admin user can DELETE answers', async () => {
+        await supabase.auth.signInWithPassword({
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
         });
+
+        const { error } = await supabase.from('answers').delete().eq('id', insertedAnswerId);
+        expect(error).toBeNull();
     });
 });
