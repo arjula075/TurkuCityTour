@@ -55,7 +55,8 @@ export const adminFetchHints = async () => {
 export const adminInsertHint = async (hint) => {
     const { data, error } = await supabase
         .from('hints')
-        .insert([hint]);
+        .insert([hint])
+        .select();
     if (error) throw error;
     return data;
 };

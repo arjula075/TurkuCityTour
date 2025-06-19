@@ -14,6 +14,7 @@ import {
 } from '../services/supabaseService';
 
 import LocationEditor from '../components/admin/LocationEditor';
+import HintEditor from '../components/admin/HintEditor';
 
 export default function AdminView() {
     const [locations, setLocations] = useState([]);
@@ -136,6 +137,9 @@ export default function AdminView() {
         }
     }
 
+    const selectedLocationName =
+        locations.find(loc => loc.id === selectedLocationId)?.name || '(none selected)';
+
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -158,7 +162,7 @@ export default function AdminView() {
                 <select
                     id="location-select"
                     value={selectedLocationId || ''}
-                    onChange={(e) => setSelectedLocationId(Number(e.target.value))}
+                    onChange={(e) => setSelectedLocationId(e.target.value)}
                     className="input-field"
                 >
                     {locations.map((loc) => (
@@ -170,40 +174,25 @@ export default function AdminView() {
             </div>
 
             {/* 🧩 Hints for selected location */}
-            <div>
-                <h2 className="text-xl font-semibold mb-2">Hints for Location {selectedLocationId || '(none selected)'}</h2>
-                <button onClick={addHint} disabled={!selectedLocationId} className="btn-pill-sm mb-4">
-                    Add Hint
-                </button>
+            {Array.isArray(hints) && hints.length >= 0 && (
+            <HintEditor
+                hints={hints}
+                updateHintText={updateHintText}
+                saveHint={saveHint}
+                deleteHint={deleteHint}
+                addHint={addHint}
+                onReorderHints={async (newList) => {
+                    setHints(newList);
+                    await Promise.all(
+                        newList.map((hint, index) =>
+                            adminUpdateHint(hint.id, { hint_order: index + 1 })
+                        )
+                    );
+                }
 
-                {loading ? (
-                    <p>Loading...</p>
-                ) : (
-                    hints.map((hint) => (
-                        <div key={hint.id} className="mb-3 border p-3 rounded shadow-sm flex gap-3 items-center">
-                            <input
-                                className="input-field flex-grow"
-                                type="text"
-                                value={hint.hint_text}
-                                onChange={(e) => updateHintText(hint.id, e.target.value)}
-                                placeholder="Hint text"
-                            />
-                            <button
-                                onClick={() => saveHint(hint)}
-                                className="btn-pill-sm bg-blue-500 text-white px-3 py-1"
-                            >
-                                Save
-                            </button>
-                            <button
-                                onClick={() => deleteHint(hint.id)}
-                                className="btn-pill-sm bg-red-500 text-white px-3 py-1"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    ))
-                )}
-            </div>
+            }
+            />
+            )}
 
             {/* TODO: Add question UI */}
         </div>

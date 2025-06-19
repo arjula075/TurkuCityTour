@@ -16,7 +16,6 @@ import {
 import SortableItem from './SortableItem';
 
 export default function LocationEditor({ locations, setLocations, onDelete, onReorder, updateLocationField }) {
-    console.log(updateLocationField);
     if (!locations) return <p>Loading locations...</p>;
 
     const sensors = useSensors(useSensor(PointerSensor));
