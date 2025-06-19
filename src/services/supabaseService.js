@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+console.log(supabaseUrl, supabaseKey);
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Fetch all hints
@@ -141,6 +142,44 @@ export const adminUpdateUserProgress = async (id, progress) => {
 export const adminDeleteUserProgress = async (id) => {
     const { data, error } = await supabase
         .from('user_progress')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+    return data;
+};
+
+// Admin: CRUD operations for locations
+export const adminFetchLocations = async () => {
+    const { data, error } = await supabase
+        .from('locations')
+        .select('*')
+        .order('display_order', { ascending: true });
+    if (error) throw error;
+    return data;
+};
+
+export const adminInsertLocation = async (location) => {
+    const { data, error } = await supabase
+        .from('locations')
+        .insert([location])
+        .select();
+    if (error) throw error;
+    console.log('insert location data:', data, 'error:', error);
+    return data;
+};
+
+export const adminUpdateLocation = async (id, location) => {
+    const { data, error } = await supabase
+        .from('locations')
+        .update(location)
+        .eq('id', id);
+    if (error) throw error;
+    return data;
+};
+
+export const adminDeleteLocation = async (id) => {
+    const { data, error } = await supabase
+        .from('locations')
         .delete()
         .eq('id', id);
     if (error) throw error;

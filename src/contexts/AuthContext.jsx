@@ -21,20 +21,20 @@ export const AuthProvider = ({ children }) => {
       } = await supabase.auth.getUser();
 
       setUser(sessionUser);
-      console.log('User:', sessionUser);
+      // console.log('User:', sessionUser);
 
       if (sessionUser) {
-        console.log("sessionUser: ", sessionUser, "")
+        // console.log("sessionUser: ", sessionUser, "")
         const { data, error } = await supabase
             .from('users') // Table name
-            .select('first_name, last_name')
+            .select('first_name, last_name, is_admin')
             .eq('id', sessionUser.id)
             .maybeSingle(); // ← allows 0 or 1 result safely
 
         if (error) {
           console.error('Error fetching user profile:', error.message);
         } else {
-          console.log('User profile:', data);
+         // console.log('User profile:', data);
           setProfile(data);
         }
       }

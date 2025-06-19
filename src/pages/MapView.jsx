@@ -6,6 +6,7 @@ export default function MapView() {
     const { user, profile, supabase } = useAuthContext();
     const [location, setLocation] = useState(null);
     const navigate = useNavigate();
+    const isAdmin = profile?.is_admin;
 
     useEffect(() => {
         if (!navigator.geolocation) {
@@ -29,6 +30,10 @@ export default function MapView() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         navigate('/');
+    };
+
+    const goToAdmin = () => {
+        navigate('/admin');
     };
 
     return (
@@ -56,6 +61,12 @@ export default function MapView() {
                 >
                     Log Out
                 </button>
+
+                {isAdmin && (
+                    <button onClick={goToAdmin} className="btn-pill2 bg-blue-600 text-white hover:bg-blue-700">
+                        Admin View
+                    </button>
+                )}
             </div>
         </div>
     );
