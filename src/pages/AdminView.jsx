@@ -1,20 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import {
-    adminFetchHints,
-    adminInsertHint,
-    adminUpdateHint,
-    adminDeleteHint,
-    adminFetchQuestions,
-    adminInsertQuestion,
-    adminUpdateQuestion,
-    adminDeleteQuestion,
-    adminFetchLocations,
-    adminUpdateLocation,
-    adminDeleteLocation,
+    adminHints,
+    adminQuestions,
+    adminAnswers,
+    adminLocations,
+    fetchQuestionsAndAnswers,
 } from '../services/supabaseService';
 
 import LocationEditor from '../components/admin/LocationEditor';
 import HintEditor from '../components/admin/HintEditor';
+import QuestionEditor from '../components/admin/QuestionEditor';
 
 export default function AdminView() {
     const [locations, setLocations] = useState([]);
@@ -23,11 +18,10 @@ export default function AdminView() {
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Fetch locations and initialize selected
     useEffect(() => {
         async function loadLocations() {
             try {
-                const locs = await adminFetchLocations();
+                const locs = await adminLocations.fetch();
                 setLocations(locs);
                 if (locs.length > 0) setSelectedLocationId(locs[0].id);
             } catch (e) {
@@ -37,17 +31,16 @@ export default function AdminView() {
         loadLocations();
     }, []);
 
-    // Load hints and questions when location changes
     useEffect(() => {
         async function loadData() {
             if (!selectedLocationId) return;
             setLoading(true);
             try {
-                const hintsData = await adminFetchHints();
-                setHints(hintsData.filter(h => h.location_id === selectedLocationId));
+                const hintsData = await adminHints.fetchByLocation(selectedLocationId);
+                setHints(hintsData);
 
-                const questionsData = await adminFetchQuestions();
-                setQuestions(questionsData.filter(q => q.location_id === selectedLocationId));
+                const questionsData = await fetchQuestionsAndAnswers(selectedLocationId);
+                setQuestions(questionsData);
             } catch (e) {
                 alert('Failed to load hints or questions: ' + e.message);
             }
@@ -60,7 +53,7 @@ export default function AdminView() {
         if (!selectedLocationId) return alert('Select a location first');
         const newHint = { location_id: selectedLocationId, hint_text: '', hint_order: hints.length + 1 };
         try {
-            const data = await adminInsertHint(newHint);
+            const data = await adminHints.insert(newHint);
             setHints([...hints, ...data]);
         } catch (e) {
             alert('Failed to add hint: ' + e.message);
@@ -73,7 +66,7 @@ export default function AdminView() {
 
     async function saveHint(hint) {
         try {
-            await adminUpdateHint(hint.id, { hint_text: hint.hint_text, hint_order: hint.hint_order });
+            await adminHints.update(hint.id, { hint_text: hint.hint_text, hint_order: hint.hint_order });
             alert('Hint saved');
         } catch (e) {
             alert('Failed to save hint: ' + e.message);
@@ -83,7 +76,7 @@ export default function AdminView() {
     async function deleteHint(id) {
         if (!window.confirm('Delete this hint?')) return;
         try {
-            await adminDeleteHint(id);
+            await adminHints.delete(id);
             setHints(hints.filter(h => h.id !== id));
         } catch (e) {
             alert('Failed to delete hint: ' + e.message);
@@ -94,10 +87,9 @@ export default function AdminView() {
         if (!window.confirm('Are you sure you want to delete this location?')) return;
 
         try {
-            await adminDeleteLocation(id);
+            await adminLocations.delete(id);
             setLocations(prev => prev.filter(loc => loc.id !== id));
 
-            // Reset selection if the deleted location was selected
             if (selectedLocationId === id) {
                 const remaining = locations.filter(loc => loc.id !== id);
                 setSelectedLocationId(remaining[0]?.id || null);
@@ -108,14 +100,12 @@ export default function AdminView() {
     }
 
     async function updateLocationField(id, field, value) {
-        // Update state immediately
         setLocations(prev =>
             prev.map(loc => (loc.id === id ? { ...loc, [field]: value } : loc))
         );
 
-        // Persist to DB
         try {
-            await adminUpdateLocation(id, { [field]: value });
+            await adminLocations.update(id, { [field]: value });
         } catch (e) {
             alert(`Failed to update location: ${e.message}`);
         }
@@ -123,13 +113,10 @@ export default function AdminView() {
 
     async function handleReorderLocations(updatedList) {
         try {
-            // Update state
             setLocations(updatedList);
-
-            // Persist order to DB
             await Promise.all(
                 updatedList.map((loc, index) =>
-                    adminUpdateLocation(loc.id, { display_order: index + 1 })
+                    adminLocations.update(loc.id, { display_order: index + 1 })
                 )
             );
         } catch (e) {
@@ -137,15 +124,165 @@ export default function AdminView() {
         }
     }
 
+    // Questions and Answers handlers
+
+    const updateQuestionText = (questionId, newText) => {
+        setQuestions((prev) =>
+            prev.map((q) =>
+                q.id === questionId ? { ...q, question_text: newText } : q
+            )
+        );
+    };
+
+    const updateCorrectAnswer = (questionId, newAnswer) => {
+        setQuestions((prev) =>
+            prev.map((q) =>
+                q.id === questionId ? { ...q, correct_answer: newAnswer } : q
+            )
+        );
+    };
+
+    const saveQuestion = async (question) => {
+        try {
+            await adminQuestions.update(question.id, {
+                question_text: question.question_text,
+                correct_answer: question.correct_answer,
+            });
+            alert('Question saved');
+        } catch (e) {
+            alert('Failed to save question: ' + e.message);
+        }
+    };
+
+    const deleteQuestion = async (questionId) => {
+        if (!window.confirm('Delete this question?')) return;
+        try {
+            await adminQuestions.delete(questionId);
+            setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+        } catch (e) {
+            alert('Failed to delete question: ' + e.message);
+        }
+    };
+
+    const addQuestion = async () => {
+        if (!selectedLocationId) return alert('Select a location first');
+        try {
+            const data = await adminQuestions.insert({
+                location_id: selectedLocationId,
+                question_text: '',
+                correct_answer: '',
+            });
+            setQuestions((prev) => [...prev, data]);
+        } catch (e) {
+            alert('Failed to add question: ' + e.message);
+        }
+    };
+
+    // Answer updates
+
+    function updateAnswerText(questionId, answerId, newText) {
+        setQuestions(prev =>
+            prev.map(q =>
+                q.id === questionId
+                    ? {
+                        ...q,
+                        answers: q.answers.map(a =>
+                            a.id === answerId ? { ...a, answer_text: newText } : a
+                        ),
+                    }
+                    : q
+            )
+        );
+    }
+
+    function toggleCorrectAnswer(questionId, answerId) {
+        setQuestions(prev =>
+            prev.map(q =>
+                q.id === questionId
+                    ? {
+                        ...q,
+                        answers: q.answers.map(a =>
+                            a.id === answerId
+                                ? { ...a, is_correct: !a.is_correct }
+                                : a
+                        ),
+                    }
+                    : q
+            )
+        );
+    }
+
+    async function saveAnswer(questionId, answer) {
+        const { id, ...rest } = answer;
+        try {
+            if (id && typeof id === 'string' && id.startsWith('new')) {
+                const data = await adminAnswers.insert({ ...rest, question_id: questionId });
+                setQuestions(prev =>
+                    prev.map(q =>
+                        q.id === questionId
+                            ? {
+                                ...q,
+                                answers: q.answers.map(a =>
+                                    a.id === id ? data : a
+                                ),
+                            }
+                            : q
+                    )
+                );
+            } else {
+                await adminAnswers.update(id, rest);
+            }
+        } catch (e) {
+            alert('Failed to save answer: ' + e.message);
+        }
+    }
+
+    async function deleteAnswer(questionId, answerId) {
+        if (!window.confirm('Delete this answer?')) return;
+        try {
+            await adminAnswers.delete(answerId);
+            setQuestions(prev =>
+                prev.map(q =>
+                    q.id === questionId
+                        ? {
+                            ...q,
+                            answers: q.answers.filter(a => a.id !== answerId),
+                        }
+                        : q
+                )
+            );
+        } catch (e) {
+            alert('Failed to delete answer: ' + e.message);
+        }
+    }
+
+    function addAnswer(questionId) {
+        const newAnswer = {
+            id: `new-${Date.now()}`,
+            question_id: questionId,
+            answer_text: '',
+            is_correct: false,
+        };
+
+        setQuestions(prev =>
+            prev.map(q =>
+                q.id === questionId
+                    ? {
+                        ...q,
+                        answers: [...(q.answers || []), newAnswer],
+                    }
+                    : q
+            )
+        );
+    }
+
     const selectedLocationName =
         locations.find(loc => loc.id === selectedLocationId)?.name || '(none selected)';
-
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
 
-            {/* 🔧 Location Management Component */}
             <LocationEditor
                 locations={locations}
                 setLocations={setLocations}
@@ -154,7 +291,6 @@ export default function AdminView() {
                 updateLocationField={updateLocationField}
             />
 
-            {/* 🔽 Select location to manage hints/questions */}
             <div className="mb-6 mt-10">
                 <label htmlFor="location-select" className="block mb-2 font-semibold">
                     Select Location for Hints:
@@ -173,28 +309,37 @@ export default function AdminView() {
                 </select>
             </div>
 
-            {/* 🧩 Hints for selected location */}
-            {Array.isArray(hints) && hints.length >= 0 && (
-            <HintEditor
-                hints={hints}
-                updateHintText={updateHintText}
-                saveHint={saveHint}
-                deleteHint={deleteHint}
-                addHint={addHint}
-                onReorderHints={async (newList) => {
-                    setHints(newList);
-                    await Promise.all(
-                        newList.map((hint, index) =>
-                            adminUpdateHint(hint.id, { hint_order: index + 1 })
-                        )
-                    );
-                }
-
-            }
-            />
+            {Array.isArray(hints) && (
+                <HintEditor
+                    hints={hints}
+                    updateHintText={updateHintText}
+                    saveHint={saveHint}
+                    deleteHint={deleteHint}
+                    addHint={addHint}
+                    onReorderHints={async (newList) => {
+                        setHints(newList);
+                        await Promise.all(
+                            newList.map((hint, index) =>
+                                adminHints.update(hint.id, { hint_order: index + 1 })
+                            )
+                        );
+                    }}
+                />
             )}
 
-            {/* TODO: Add question UI */}
+            <QuestionEditor
+                questions={questions}
+                updateQuestionText={updateQuestionText}
+                updateCorrectAnswer={updateCorrectAnswer}
+                saveQuestion={saveQuestion}
+                deleteQuestion={deleteQuestion}
+                addQuestion={addQuestion}
+                updateAnswerText={updateAnswerText}
+                toggleCorrectAnswer={toggleCorrectAnswer}
+                saveAnswer={saveAnswer}
+                deleteAnswer={deleteAnswer}
+                addAnswer={addAnswer}
+            />
         </div>
     );
 }
