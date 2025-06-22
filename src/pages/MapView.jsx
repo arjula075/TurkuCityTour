@@ -11,7 +11,7 @@ export default function MapView() {
     useEffect(() => {
         if (!navigator.geolocation) {
             // Fallback immediately if geolocation isn't supported
-            setLocation({ lat: 52.520008, lng: 13.404954 }); // Berlin
+            setLocation({ lat: 60.4522438, lng: 22.2680450}); // Berlin
             return;
         }
 
@@ -21,7 +21,7 @@ export default function MapView() {
             (error) => {
                 console.error('Location error:', error);
                 // Fallback to Berlin if error occurs
-                setLocation({ lat: 52.520008, lng: 13.404954 });
+                setLocation({ lat: 60.4522438, lng: 22.2680450 });
             },
             { enableHighAccuracy: true }
         );

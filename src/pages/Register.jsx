@@ -49,7 +49,7 @@ export default function Register() {
 
 
         // Optional: inform user to check email if confirmation is required
-        alert('Registered! Please check your email to confirm your account.');
+        alert('Registered!');
 
         navigate('/');
     };
