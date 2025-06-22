@@ -11,6 +11,8 @@ export default function MapView() {
     const [currentTrainingStep, setCurrentTrainingStep] = useState(0);
     const [trainingComplete, setTrainingComplete] = useState(false);
     const isAdmin = profile?.is_admin;
+    const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
+
 
     const TRAINING_POINTS = [
         { id: 1, name: "Turku Cathedral, Turun Tuomiokirkko", lat: 60.452324, lng: 22.278240 },
@@ -119,8 +121,9 @@ export default function MapView() {
                     whenCreated={(map) => (window.leafletMap = map)} // optional ref
                 >
                     <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        attribution='&copy; <a href="https://carto.com/">CARTO</a> contributors'
+                        url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
+                        attribution='&copy; <a href="http://www.thunderforest.com/">Thunderforest</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        maxZoom={22}
                     />
                     {/* Optionally show current location marker */}
                     <Marker position={[location.lat, location.lng]} />
