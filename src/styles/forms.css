@@ -2,7 +2,7 @@
 
 @layer components {
     .btn-pill2 {
-        @apply w-full inline-block px-8 py-4 rounded-full text-5xl text-white bg-blue-600 hover:bg-blue-700 font-semibold transition duration-200;
+        @apply w-full inline-block px-8 mb-4 py-4 rounded-full text-5xl text-white bg-blue-600 hover:bg-blue-700 font-semibold transition duration-200;
     }
 
     .input-gray {
@@ -10,7 +10,7 @@
     }
 
     .btn-pill-sm {
-        @apply inline-block px-3 py-1 rounded-full text-base text-white bg-blue-600 hover:bg-blue-700 font-semibold transition duration-200;
+        @apply inline-block px-3 py-1 rounded-full mb-4 text-base text-white bg-blue-600 hover:bg-blue-700 font-semibold transition duration-200;
         width: auto;
     }
 
