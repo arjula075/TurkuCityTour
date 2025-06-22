@@ -143,7 +143,7 @@ export default function MapView() {
                 </button>
 
                 {trainingMode && (
-                    <div className="text-2xl font-semibold mt-4">
+                    <div className="text-4xl font-semibold mt-4">
                         <strong>Training Mode:</strong> Click on <em>{TRAINING_POINTS[currentTrainingStep].name}</em>
                     </div>
                 )}
