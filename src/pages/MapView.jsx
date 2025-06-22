@@ -119,8 +119,8 @@ export default function MapView() {
                     whenCreated={(map) => (window.leafletMap = map)} // optional ref
                 >
                     <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution="&copy; OpenStreetMap contributors"
+                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://carto.com/">CARTO</a> contributors'
                     />
                     {/* Optionally show current location marker */}
                     <Marker position={[location.lat, location.lng]} />
@@ -143,7 +143,7 @@ export default function MapView() {
                 </button>
 
                 {trainingMode && (
-                    <div>
+                    <div className="text-2xl font-semibold mt-4">
                         <strong>Training Mode:</strong> Click on <em>{TRAINING_POINTS[currentTrainingStep].name}</em>
                     </div>
                 )}
