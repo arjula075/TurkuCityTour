@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { fetchLocationsWithHintsQuestionsAnswers } from '../services/supabaseService';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,11 +22,17 @@ L.Icon.Default.mergeOptions({
 
 export default function MapView() {
     const { user, profile, supabase } = useAuthContext();
+    const [locations, setLocations] = useState([]);
     const [location, setLocation] = useState(null);
     const navigate = useNavigate();
     const [trainingMode, setTrainingMode] = useState(false);
     const [currentTrainingStep, setCurrentTrainingStep] = useState(0);
     const [trainingComplete, setTrainingComplete] = useState(false);
+    const [gameActive, setGameActive] = useState(false);
+    const [currentLocationIndex, setCurrentLocationIndex] = useState(0);
+    const [currentHintIndex, setCurrentHintIndex] = useState(0);
+    const [score, setScore] = useState(0);
+    const [guessed, setGuessed] = useState(false);
     const isAdmin = profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
 
@@ -38,22 +45,43 @@ export default function MapView() {
 
 
     useEffect(() => {
-        if (!navigator.geolocation) {
-            // Fallback immediately if geolocation isn't supported
-            setLocation({ lat: 60.4522438, lng: 22.2680450}); // Berlin
-            return;
+        const fallbackLocation = { lat: 60.4522438, lng: 22.2680450 };
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
+                },
+                (error) => {
+                    console.warn("⚠️ Geolocation not allowed or failed. Using fallback location.");
+                    console.warn("Geolocation error:", error.message);
+                    setLocation(fallbackLocation);
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            setLocation(fallbackLocation);
         }
 
-        navigator.geolocation.getCurrentPosition(
-            (position) =>
-                setLocation({ lat: position.coords.latitude, lng: position.coords.longitude }),
-            (error) => {
-                console.error('Location error:', error);
-                // Fallback to Berlin if error occurs
-                setLocation({ lat: 60.4522438, lng: 22.2680450 });
-            },
-            { enableHighAccuracy: true }
-        );
+        fetchLocationsWithHintsQuestionsAnswers()
+            .then((data) => {
+                // Format or sort if needed
+                const formatted = data.map(loc => ({
+                    ...loc,
+                    hints: (loc.hints ?? []).sort((a, b) => a.hint_order - b.hint_order),
+                    questions: (loc.questions ?? []).map(q => ({
+                        ...q,
+                        answers: (q.answers ?? []).sort((a, b) => a.answer_text.localeCompare(b.answer_text)),
+                    })),
+                }));
+                console.log('Fetched locations:', formatted);
+                setLocations(formatted);
+            })
+            .catch((error) => {
+                console.error('Error fetching locations:', error);
+            });
+
+        fetchLocationsWithHintsQuestionsAnswers();
     }, []);
 
     const handleLogout = async () => {
@@ -69,7 +97,14 @@ export default function MapView() {
     };
 
     const handleMapClick = (e) => {
-        if (!trainingMode || trainingComplete) return;
+        if (trainingMode) {
+            handleTrainingClick(e);
+        } else if (gameActive && !guessed) {
+            handleGameClick(e);
+        }
+    };
+    const handleTrainingClick = (e) => {
+        if (trainingComplete) return;
 
         const clickedLat = e.latlng.lat;
         const clickedLng = e.latlng.lng;
@@ -84,12 +119,31 @@ export default function MapView() {
                 setTrainingMode(false);
                 alert("🎉 Training complete! You can now use the map normally.");
             } else {
-                setCurrentTrainingStep(currentTrainingStep + 1);
+                setCurrentTrainingStep((prev) => prev + 1);
             }
         } else {
             alert(`❌ Try again! You're ${Math.round(distance)}m away from ${target.name}`);
         }
     };
+
+    const handleGameClick = (e) => {
+        const clickedLat = e.latlng.lat;
+        const clickedLng = e.latlng.lng;
+        const loc = locations[currentLocationIndex];
+
+        const distance = getDistance(clickedLat, clickedLng, loc.latitude, loc.longitude);
+
+        if (distance <= 100) {
+            const earnedPoints = Math.max(5 - currentHintIndex, 1);
+            setScore((prev) => prev + earnedPoints);
+            setGuessed(true);
+            alert(`✅ Correct! You earned ${earnedPoints} points.`);
+        } else {
+            alert(`❌ Too far! You are ${Math.round(distance)} meters away.`);
+        }
+    };
+
+
 
     function TrainingClickHandler() {
         const map = useMapEvents({
@@ -149,16 +203,60 @@ export default function MapView() {
             )}
 
             <div className="mt-6 w-full max-w-md">
-                <button
-                    onClick={handleLogout}
-                    className="btn-pill2"
-                >
-                    Log Out
-                </button>
 
-                <button className="btn-pill2 bg-blue-600 text-white hover:bg-blue-700" onClick={startTraining} disabled={trainingMode}>
-                    🧪 Exercise
-                </button>
+                {!gameActive && (
+                    <button
+                        className="btn-pill2"
+                        onClick={() => {
+                            setGameActive(true);
+                            setCurrentLocationIndex(0);
+                            setCurrentHintIndex(0);
+                            setScore(0);
+                            setGuessed(false);
+                        }}
+                    >
+                        Start Game
+                    </button>
+                )}
+
+                {gameActive && (
+                    <div className="bg-white p-4 rounded shadow-md space-y-3">
+                        <p className="font-semibold">Hint:</p>
+                        <p>{locations[currentLocationIndex]?.hints?.[currentHintIndex]?.hint_text ?? 'No more hints'}</p>
+
+
+                        {!guessed && currentHintIndex < 4 && (
+                            <button
+                                className="btn bg-gray-300"
+                                onClick={() => setCurrentHintIndex((prev) => prev + 1)}
+                            >
+                                Next Hint
+                            </button>
+                        )}
+
+                        <p className="text-sm mt-2 text-gray-500">Score: {score}</p>
+                    </div>
+                )}
+
+                {!gameActive && (
+                    <>
+
+
+                        <button
+                            className="btn-pill2 bg-blue-600 text-white hover:bg-blue-700"
+                            onClick={startTraining}
+                            disabled={trainingMode}
+                        >
+                            🧪 Exercise
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="btn-pill2"
+                        >
+                            Log Out
+                        </button>
+                    </>
+                )}
 
                 {trainingMode && (
                     <div className="text-4xl font-semibold mt-4">

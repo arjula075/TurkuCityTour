@@ -144,6 +144,48 @@ export default function AdminView() {
         );
     };
 
+    async function toggleCorrectAnswer(questionId, answerId) {
+        // Optimistic UI update
+        setQuestions(prev =>
+            prev.map(q =>
+                q.id === questionId
+                    ? {
+                        ...q,
+                        answers: q.answers.map(a =>
+                            a.id === answerId ? { ...a, is_correct: !a.is_correct } : a
+                        ),
+                    }
+                    : q
+            )
+        );
+
+        // Find current answer's is_correct value before toggle (optional)
+        const question = questions.find(q => q.id === questionId);
+        if (!question) return;
+        const answer = question.answers.find(a => a.id === answerId);
+        if (!answer) return;
+
+        try {
+            const updatedAnswer = await adminAnswers.toggleCorrectAnswer(answerId, answer.is_correct);
+
+            // Sync with DB data
+            setQuestions(prev =>
+                prev.map(q =>
+                    q.id === questionId
+                        ? {
+                            ...q,
+                            answers: q.answers.map(a =>
+                                a.id === answerId ? updatedAnswer : a
+                            ),
+                        }
+                        : q
+                )
+            );
+        } catch (e) {
+            alert('Failed to save answer status: ' + e.message);
+        }
+    }
+
     const saveQuestion = async (question) => {
         try {
             await adminQuestions.update(question.id, {
@@ -190,23 +232,6 @@ export default function AdminView() {
                         ...q,
                         answers: q.answers.map(a =>
                             a.id === answerId ? { ...a, answer_text: newText } : a
-                        ),
-                    }
-                    : q
-            )
-        );
-    }
-
-    function toggleCorrectAnswer(questionId, answerId) {
-        setQuestions(prev =>
-            prev.map(q =>
-                q.id === questionId
-                    ? {
-                        ...q,
-                        answers: q.answers.map(a =>
-                            a.id === answerId
-                                ? { ...a, is_correct: !a.is_correct }
-                                : a
                         ),
                     }
                     : q
@@ -382,12 +407,11 @@ export default function AdminView() {
             <QuestionEditor
                 questions={questions}
                 updateQuestionText={updateQuestionText}
-                updateCorrectAnswer={updateCorrectAnswer}
+                toggleCorrectAnswer={toggleCorrectAnswer}
                 saveQuestion={saveQuestion}
                 deleteQuestion={deleteQuestion}
                 addQuestion={addQuestion}
                 updateAnswerText={updateAnswerText}
-                toggleCorrectAnswer={toggleCorrectAnswer}
                 saveAnswer={saveAnswer}
                 deleteAnswer={deleteAnswer}
                 addAnswer={addAnswer}

@@ -110,7 +110,7 @@ export default function LocationEditor({
                 <div className="pt-4">
                     <button
                         onClick={() => {
-                            console.log('Clicked Add Location');
+
                             onAddLocation();
                         }}
                         className="btn bg-green-500 text-white px-4 py-2 rounded"

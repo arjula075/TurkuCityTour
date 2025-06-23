@@ -77,6 +77,18 @@ export const adminQuestions = {
 // Admin: Answers
 export const adminAnswers = {
     ...adminTable('answers'),
+
+    toggleCorrectAnswer: (answerId, currentStatus) => {
+        console.log('toggleCorrectAnswer called with:', { answerId, currentStatus });
+        return handle(
+            supabase
+                .from('answers')
+                .update({ is_correct: !currentStatus })
+                .eq('id', answerId)
+                .select()
+                .single()
+        );
+    },
 };
 
 // Admin: Locations
@@ -95,3 +107,31 @@ export const adminLocations = {
 
 // Admin: User Progress
 export const adminUserProgress = adminTable('user_progress');
+
+export const fetchLocationsWithHintsQuestionsAnswers = () =>
+    handle(
+        supabase
+            .from('locations')
+            .select(`
+        id,
+        name,
+        latitude,
+        longitude,
+        hints (
+          hint_text,
+          hint_order
+        ),
+        questions (
+          id,
+          question_text,
+          correct_answer,
+          answers (
+            id,
+            answer_text,
+            is_correct
+          )
+        )
+      `)
+            .order('id', { ascending: true })
+    );
+
