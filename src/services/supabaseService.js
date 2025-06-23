@@ -117,6 +117,7 @@ export const fetchLocationsWithHintsQuestionsAnswers = () =>
         name,
         latitude,
         longitude,
+        display_order,
         hints (
           hint_text,
           hint_order
@@ -135,3 +136,31 @@ export const fetchLocationsWithHintsQuestionsAnswers = () =>
             .order('id', { ascending: true })
     );
 
+export async function updateUserProgress(userId, locationId, hintsUsed) {
+    try {
+        console.log('Updating user progress:', { userId, locationId, hintsUsed });
+        const { data, error } = await supabase
+            .from('user_progress')
+            .upsert(
+                {
+                    user_id: userId,
+                    location_id: locationId,
+                    hints_used: hintsUsed,
+                    answered_correctly: false,
+                    completed_at: new Date().toISOString(),
+                },
+                {
+                    onConflict: ['user_id', 'location_id'], // unique constraint to update existing progress
+                    returning: 'representation',
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+        return data;
+    } catch (err) {
+        console.error('Error updating user progress:', err.message);
+        throw err;
+    }
+}

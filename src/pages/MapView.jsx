@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { fetchLocationsWithHintsQuestionsAnswers } from '../services/supabaseService';
+import { fetchLocationsWithHintsQuestionsAnswers, updateUserProgress } from '../services/supabaseService';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -66,7 +66,10 @@ export default function MapView() {
         fetchLocationsWithHintsQuestionsAnswers()
             .then((data) => {
                 // Format or sort if needed
-                const formatted = data.map(loc => ({
+                console.log('Fetched locations:', data);
+                const sortedLocations = data.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
+                console.log('sortedLocations locations:', sortedLocations);
+                const formatted = sortedLocations.map(loc => ({
                     ...loc,
                     hints: (loc.hints ?? []).sort((a, b) => a.hint_order - b.hint_order),
                     questions: (loc.questions ?? []).map(q => ({
@@ -126,7 +129,7 @@ export default function MapView() {
         }
     };
 
-    const handleGameClick = (e) => {
+    const handleGameClick = async (e) => {
         const clickedLat = e.latlng.lat;
         const clickedLng = e.latlng.lng;
         const loc = locations[currentLocationIndex];
@@ -137,6 +140,12 @@ export default function MapView() {
             const earnedPoints = Math.max(5 - currentHintIndex, 1);
             setScore((prev) => prev + earnedPoints);
             setGuessed(true);
+            try {
+                await updateUserProgress(user.id, loc.id, earnedPoints);
+                console.log('User progress updated');
+            } catch (error) {
+                console.error('Failed to update user progress:', error);
+            }
             alert(`✅ Correct! You earned ${earnedPoints} points.`);
         } else {
             alert(`❌ Too far! You are ${Math.round(distance)} meters away.`);
