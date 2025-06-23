@@ -182,9 +182,9 @@ export default function MapView() {
     }
 
     // Calculate distance to next location
-    const nextLocation = locations[currentIndex + 1];
-    const distanceToNext = location && nextLocation
-        ? getDistance(location.lat, location.lng, nextLocation.latitude, nextLocation.longitude)
+    const currentLoc = locations[currentIndex];
+    const distanceToCurrent = location && currentLoc
+        ? getDistance(location.lat, location.lng, currentLoc.latitude, currentLoc.longitude)
         : null;
 
     return (
@@ -230,13 +230,13 @@ export default function MapView() {
                     />
                 )}
 
-                {gameActive && guessed && nextLocation && location && (
+                {gameActive && guessed && currentLoc && location && (
                     <div className="text-center p-4 bg-gray-100 rounded">
                         <p className="text-4xl font-semibold">
-                            🎯 Great! Now head to the next location:
+                            🎯 Great! Now move to the location:
                         </p>
                         <p className="text-3xl mt-2">
-                            Distance to {nextLocation.name}: {Math.round(distanceToNext)} meters
+                            Distance to {currentLoc.name}: {Math.round(distanceToCurrent)} meters
                         </p>
                     </div>
                 )}
