@@ -1,23 +1,11 @@
-// TurkuCityTour/src/pages/FinalMessage.jsx
-import React, { useEffect, useState } from 'react';
-import { useAuthContext } from '../contexts/AuthContext';
+// FinalMessage.jsx
+import React from 'react';
 
-export default function FinalMessage() {
-  const { user, supabase } = useAuthContext();
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    async function fetchMessage() {
-      const { data, error } = await supabase.from('users').select('message').eq('id', user.id).single();
-      if (data) setMessage(data.message);
-    }
-    fetchMessage();
-  }, []);
-
+export default function FinalMessage({ message }) {
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Congratulations!</h1>
-      <p>{message || 'Thanks for playing!'}</p>
-    </div>
+      <div className="p-4 text-center">
+        <h1 className="text-3xl font-bold mb-4">🎉 Congratulations!</h1>
+        <p className="text-xl">{message || 'Thanks for playing!'}</p>
+      </div>
   );
 }

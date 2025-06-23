@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
         // console.log("sessionUser: ", sessionUser, "")
         const { data, error } = await supabase
             .from('users') // Table name
-            .select('first_name, last_name, is_admin')
+            .select('first_name, last_name, is_admin, message')
             .eq('id', sessionUser.id)
             .maybeSingle(); // ← allows 0 or 1 result safely
 
