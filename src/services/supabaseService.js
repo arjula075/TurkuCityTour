@@ -164,3 +164,14 @@ export async function updateUserProgress(userId, locationId, hintsUsed) {
         throw err;
     }
 }
+
+export async function clearUserProgress(user_id) {
+    const { error } = await supabase
+        .from('user_progress')
+        .delete()
+        .eq('user_id', user_id);
+
+    if (error) {
+        throw error;
+    }
+}

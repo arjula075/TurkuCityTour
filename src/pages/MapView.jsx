@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import { fetchLocationsWithHintsQuestionsAnswers, updateUserProgress } from '../services/supabaseService';
+import { fetchLocationsWithHintsQuestionsAnswers, updateUserProgress, clearUserProgress } from '../services/supabaseService';
 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -33,6 +33,10 @@ export default function MapView() {
     const [currentHintIndex, setCurrentHintIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [guessed, setGuessed] = useState(false);
+    const [waitingAtLocation, setWaitingAtLocation] = useState(false);
+    const [showQuestion, setShowQuestion] = useState(false);
+    const [selectedAnswer, setSelectedAnswer] = useState(null);
+    const [quizComplete, setQuizComplete] = useState(false);
     const isAdmin = profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
 
@@ -44,6 +48,7 @@ export default function MapView() {
     ];
 
 
+    // 1. Runs on mount (initial location + load data)
     useEffect(() => {
         const fallbackLocation = { lat: 60.4522438, lng: 22.2680450 };
 
@@ -65,10 +70,7 @@ export default function MapView() {
 
         fetchLocationsWithHintsQuestionsAnswers()
             .then((data) => {
-                // Format or sort if needed
-                console.log('Fetched locations:', data);
                 const sortedLocations = data.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
-                console.log('sortedLocations locations:', sortedLocations);
                 const formatted = sortedLocations.map(loc => ({
                     ...loc,
                     hints: (loc.hints ?? []).sort((a, b) => a.hint_order - b.hint_order),
@@ -77,15 +79,38 @@ export default function MapView() {
                         answers: (q.answers ?? []).sort((a, b) => a.answer_text.localeCompare(b.answer_text)),
                     })),
                 }));
-                console.log('Fetched locations:', formatted);
                 setLocations(formatted);
             })
             .catch((error) => {
                 console.error('Error fetching locations:', error);
             });
-
-        fetchLocationsWithHintsQuestionsAnswers();
     }, []);
+
+
+// 2. Runs when waitingAtLocation is true — monitors proximity
+    useEffect(() => {
+        if (!waitingAtLocation || !locations[currentLocationIndex]) return;
+
+        const watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                const loc = locations[currentLocationIndex];
+                const dist = getDistance(lat, lng, loc.latitude, loc.longitude);
+                if (dist <= 50) {
+                    navigator.geolocation.clearWatch(watchId);
+                    setShowQuestion(true);
+                }
+            },
+            (err) => console.error("Geo error", err),
+            { enableHighAccuracy: true }
+        );
+
+        return () => {
+            navigator.geolocation.clearWatch(watchId);
+        };
+    }, [waitingAtLocation, locations, currentLocationIndex]);
+
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -146,7 +171,8 @@ export default function MapView() {
             } catch (error) {
                 console.error('Failed to update user progress:', error);
             }
-            alert(`✅ Correct! You earned ${earnedPoints} points.`);
+            alert(`✅ Correct! You earned ${earnedPoints} points. Now walk to the location.`);
+            setWaitingAtLocation(true);
         } else {
             alert(`❌ Too far! You are ${Math.round(distance)} meters away.`);
         }
@@ -216,12 +242,19 @@ export default function MapView() {
                 {!gameActive && (
                     <button
                         className="btn-pill2"
-                        onClick={() => {
+                        onClick={async() => {
+                            try {
+                                await clearUserProgress(user.id);
+                                console.log('✅ Cleared previous user progress');
+                            } catch (error) {
+                                console.error('❌ Failed to clear progress:', error.message);
+                            }
                             setGameActive(true);
                             setCurrentLocationIndex(0);
                             setCurrentHintIndex(0);
                             setScore(0);
                             setGuessed(false);
+
                         }}
                     >
                         Start Game
@@ -244,6 +277,66 @@ export default function MapView() {
                         )}
 
                         <p className="text-sm mt-2 text-gray-500">Score: {score}</p>
+                    </div>
+                )}
+
+                {showQuestion && !quizComplete && (
+                    <div className="mt-6">
+                        <h3 className="text-4xl font-bold mb-4">
+                            {locations[currentLocationIndex]?.questions?.[0]?.question_text}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {locations[currentLocationIndex]?.questions?.[0]?.answers?.map((answer) => (
+                                <button
+                                    key={answer.id}
+                                    className={`btn-pill2 ${selectedAnswer ? 'opacity-50' : ''}`}
+                                    onClick={async () => {
+                                        if (selectedAnswer) return;
+
+                                        const correct = answer.is_correct;
+                                        setSelectedAnswer(answer.id);
+
+                                        if (correct) {
+                                            await supabase
+                                                .from('user_progress')
+                                                .update({ answered_correctly: true })
+                                                .eq('user_id', user.id)
+                                                .eq('location_id', locations[currentLocationIndex].id);
+                                        }
+
+                                        setQuizComplete(true);
+                                    }}
+                                >
+                                    {answer.answer_text}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {quizComplete && (
+                    <div className="mt-6">
+                        {currentLocationIndex < locations.length - 1 ? (
+                            <button
+                                className="btn-pill2 bg-green-600 text-white"
+                                onClick={() => {
+                                    setCurrentLocationIndex((prev) => prev + 1);
+                                    setCurrentHintIndex(0);
+                                    setGuessed(false);
+                                    setWaitingAtLocation(false);
+                                    setShowQuestion(false);
+                                    setSelectedAnswer(null);
+                                    setQuizComplete(false);
+                                }}
+                            >
+                                ➡️ Next Location
+                            </button>
+                        ) : (
+                            <div className="mt-4 text-xl font-semibold">
+                                🎉 You’ve completed the tour!
+                                <br />
+                                Message: {profile?.message ?? "Thank you for playing!"}
+                            </div>
+                        )}
                     </div>
                 )}
 
