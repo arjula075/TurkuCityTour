@@ -10,6 +10,7 @@ import {
 import LocationEditor from '../components/admin/LocationEditor';
 import HintEditor from '../components/admin/HintEditor';
 import QuestionEditor from '../components/admin/QuestionEditor';
+import MapCoordinatePicker from '../components/admin/MapCoordinatePicker';
 
 export default function AdminView() {
     const [locations, setLocations] = useState([]);
@@ -17,6 +18,7 @@ export default function AdminView() {
     const [hints, setHints] = useState([]);
     const [questions, setQuestions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [locationToSetCoords, setLocationToSetCoords] = useState(null);
 
     useEffect(() => {
         async function loadLocations() {
@@ -275,6 +277,54 @@ export default function AdminView() {
             )
         );
     }
+    // Set coordinates to locations
+    function handleSetCoordinates(loc) {
+        setLocationToSetCoords(loc);
+    }
+
+    async function handleSaveCoordinates(latlng) {
+        const { lat, lng } = latlng;
+        try {
+            await adminLocations.update(locationToSetCoords.id, {
+                latitude: lat,
+                longitude: lng,
+            });
+
+            setLocations(prev =>
+                prev.map(loc =>
+                    loc.id === locationToSetCoords.id ? { ...loc, latitude: lat, longitude: lng } : loc
+                )
+            );
+            setLocationToSetCoords(null);
+        } catch (e) {
+            alert('Failed to save coordinates: ' + e.message);
+        }
+    }
+
+    async function handleAddLocation() {
+        try {
+            const newLoc = await adminLocations.insert({
+                name: '',
+                description: '',
+                latitude: null,
+                longitude: null,
+                display_order: locations.length + 1,
+            });
+
+            const locToAdd = Array.isArray(newLoc) ? newLoc[0] : newLoc;
+
+            setLocations(prev => [...prev, locToAdd]);
+
+            // 👉 Show the map immediately for this new location
+            setLocationToSetCoords(locToAdd);
+
+        } catch (e) {
+            alert('Failed to add location: ' + e.message);
+        }
+    }
+
+
+
 
     const selectedLocationName =
         locations.find(loc => loc.id === selectedLocationId)?.name || '(none selected)';
@@ -289,6 +339,8 @@ export default function AdminView() {
                 onDelete={handleDeleteLocation}
                 onReorder={handleReorderLocations}
                 updateLocationField={updateLocationField}
+                onSetCoordinates={handleSetCoordinates}
+                onAddLocation={handleAddLocation}
             />
 
             <div className="mb-6 mt-10">
@@ -340,6 +392,18 @@ export default function AdminView() {
                 deleteAnswer={deleteAnswer}
                 addAnswer={addAnswer}
             />
+            {locationToSetCoords && (
+                <MapCoordinatePicker
+                    initialPosition={
+                        locationToSetCoords.latitude && locationToSetCoords.longitude
+                            ? [locationToSetCoords.latitude, locationToSetCoords.longitude]
+                            : null
+                    }
+                    onCancel={() => setLocationToSetCoords(null)}
+                    onSave={handleSaveCoordinates}
+                />
+            )}
+
         </div>
     );
 }

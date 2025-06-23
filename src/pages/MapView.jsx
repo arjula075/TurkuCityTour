@@ -91,6 +91,16 @@ export default function MapView() {
         }
     };
 
+    function TrainingClickHandler() {
+        const map = useMapEvents({
+            click(e) {
+                handleMapClick(e);
+            }
+        });
+
+        return null; // this component only listens for clicks
+    }
+
     function getDistance(lat1, lon1, lat2, lon2) {
         const R = 6371e3; // metres
         const φ1 = (lat1 * Math.PI) / 180;
@@ -111,17 +121,6 @@ export default function MapView() {
     const goToAdmin = () => {
         navigate('/admin');
     };
-
-    function TrainingClickHandler() {
-        const map = useMapEvents({
-            click(e) {
-                handleMapClick(e);
-            }
-        });
-
-        return null; // this component only listens for clicks
-    }
-
 
     return (
         <div className="flex flex-col items-center p-4 bg-white">

@@ -15,7 +15,15 @@ import {
 
 import SortableItem from './SortableItem';
 
-export default function LocationEditor({ locations, setLocations, onDelete, onReorder, updateLocationField }) {
+export default function LocationEditor({
+                                           locations,
+                                           setLocations,
+                                           onDelete,
+                                           onReorder,
+                                           updateLocationField,
+                                           onSetCoordinates,
+                                           onAddLocation // optional
+                                       }) {
     if (!locations) return <p>Loading locations...</p>;
 
     const sensors = useSensors(useSensor(PointerSensor));
@@ -28,7 +36,7 @@ export default function LocationEditor({ locations, setLocations, onDelete, onRe
             const newList = arrayMove(locations, oldIndex, newIndex);
 
             setLocations(newList);
-            onReorder(newList); // persist order in AdminView
+            onReorder(newList);
         }
     };
 
@@ -74,6 +82,15 @@ export default function LocationEditor({ locations, setLocations, onDelete, onRe
                                         updateLocationField(loc.id, 'longitude', e.target.value === '' ? null : parseFloat(e.target.value))
                                     }
                                 />
+
+                                {/* ✅ FIXED: call onSetCoordinates with the right loc */}
+                                <button
+                                    className="text-blue-600 underline"
+                                    onClick={() => onSetCoordinates(loc)}
+                                >
+                                    Set Coordinates
+                                </button>
+
                                 <div className="flex justify-end">
                                     <button
                                         onClick={() => onDelete(loc.id)}
@@ -87,6 +104,21 @@ export default function LocationEditor({ locations, setLocations, onDelete, onRe
                     ))}
                 </SortableContext>
             </DndContext>
+
+            {/* ✅ Add Location button outside the loop */}
+            {onAddLocation && (
+                <div className="pt-4">
+                    <button
+                        onClick={() => {
+                            console.log('Clicked Add Location');
+                            onAddLocation();
+                        }}
+                        className="btn bg-green-500 text-white px-4 py-2 rounded"
+                    >
+                        Add Location
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
