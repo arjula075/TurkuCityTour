@@ -175,3 +175,16 @@ export async function clearUserProgress(user_id) {
         throw error;
     }
 }
+
+export async function markQuestionAsAnsweredCorrectly(userId, locationId) {
+    const { error } = await supabase
+        .from('user_progress')
+        .update({ answered_correctly: true })
+        .eq('user_id', userId)
+        .eq('location_id', locationId);
+
+    if (error) {
+        console.error("Failed to mark question as answered correctly:", error.message);
+        throw error;
+    }
+}

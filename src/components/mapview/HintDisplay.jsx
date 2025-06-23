@@ -7,10 +7,10 @@ export default function HintDisplay({ location, hintIndex, setHintIndex, score, 
 
     return (
         <div className="bg-white p-4 rounded shadow-md space-y-3">
-            <p className="font-semibold">Hint:</p>
-            <p>{hints[hintIndex]?.hint_text ?? 'No more hints'}</p>
+            <p className="font-semibold text-4xl">Hint:</p>
+            <p className="text-4xl">{hints[hintIndex]?.hint_text ?? 'No more hints'}</p>
             {!guessed && hintIndex < maxHints - 1 && (
-                <button className="btn bg-gray-300" onClick={() => setHintIndex((i) => i + 1)}>
+                <button className="btn-pill2" onClick={() => setHintIndex((i) => i + 1)}>
                     Next Hint
                 </button>
             )}

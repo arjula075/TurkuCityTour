@@ -12,7 +12,8 @@ import FinalMessage from './FinalMessage';
 import {
     fetchLocationsWithHintsQuestionsAnswers,
     updateUserProgress,
-    clearUserProgress
+    clearUserProgress,
+    markQuestionAsAnsweredCorrectly
 } from '../services/supabaseService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -50,6 +51,7 @@ export default function MapView() {
     const [showQuestion, setShowQuestion] = useState(false);
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [quizComplete, setQuizComplete] = useState(false);
+    const [centerOnUser, setCenterOnUser] = useState(true);
     const isAdmin = profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
 
@@ -148,6 +150,7 @@ export default function MapView() {
                 } else setTrainingStep((s) => s + 1);
             } else alert(`❌ Too far! ${Math.round(d)}m from ${point.name}`);
         } else if (gameActive && !guessed) {
+            setCenterOnUser(false);
             const loc = locations[currentIndex];
             const d = getDistance(e.latlng.lat, e.latlng.lng, loc.latitude, loc.longitude);
             if (d <= 100) {
@@ -166,15 +169,23 @@ export default function MapView() {
         return null;
     };
 
-    function RecenterMap({ lat, lng }) {
+    function RecenterMap({ lat, lng, centerOnUser }) {
         const map = useMap();
+
         useEffect(() => {
-            if (lat && lng) {
+            if (centerOnUser && lat && lng) {
                 map.setView([lat, lng], map.getZoom());
             }
-        }, [lat, lng, map]);
+        }, [lat, lng, centerOnUser, map]);
+
         return null;
     }
+
+    // Calculate distance to next location
+    const nextLocation = locations[currentIndex + 1];
+    const distanceToNext = location && nextLocation
+        ? getDistance(location.lat, location.lng, nextLocation.latitude, nextLocation.longitude)
+        : null;
 
     return (
         <div className="p-4 bg-white">
@@ -189,7 +200,7 @@ export default function MapView() {
                         attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'
                     />
                     <Marker position={[location.lat, location.lng]} />
-                    <RecenterMap lat={location.lat} lng={location.lng} />
+                    <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser}/>
                     <TrainingClickHandler />
                 </MapContainer>
             ) : <p>Getting location...</p>}
@@ -209,7 +220,7 @@ export default function MapView() {
                     >Start Game</button>
                 )}
 
-                {gameActive && (
+                {gameActive && !guessed && locations[currentIndex] && (
                     <HintDisplay
                         location={locations[currentIndex]}
                         hintIndex={hintIndex}
@@ -219,16 +230,24 @@ export default function MapView() {
                     />
                 )}
 
+                {gameActive && guessed && nextLocation && location && (
+                    <div className="text-center p-4 bg-gray-100 rounded">
+                        <p className="text-4xl font-semibold">
+                            🎯 Great! Now head to the next location:
+                        </p>
+                        <p className="text-3xl mt-2">
+                            Distance to {nextLocation.name}: {Math.round(distanceToNext)} meters
+                        </p>
+                    </div>
+                )}
+
                 {showQuestion && !quizComplete && (
                     <QuestionDisplay
                         question={locations[currentIndex]?.questions?.[0]}
                         selectedAnswer={selectedAnswer}
                         setSelectedAnswer={setSelectedAnswer}
-                        onAnsweredCorrect={() => {
-                            supabase.from('user_progress')
-                                .update({ answered_correctly: true })
-                                .eq('user_id', user.id)
-                                .eq('location_id', locations[currentIndex].id);
+                        onAnsweredCorrect={async () => {
+                            await markQuestionAsAnsweredCorrectly(user.id, locations[currentIndex].id);
                             setQuizComplete(true);
                         }}
                     />
