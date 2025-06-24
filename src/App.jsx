@@ -8,6 +8,7 @@ import FinalMessage from './pages/FinalMessage';
 import Register from './pages/Register';
 import AdminView from './pages/AdminView';
 import GameComplete from './pages/GameComplete';
+import '@fontsource/montserrat';
 
 // Admin route guard wrapper component
 function AdminRoute({ children }) {

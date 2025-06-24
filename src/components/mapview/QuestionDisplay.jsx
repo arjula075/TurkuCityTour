@@ -69,7 +69,7 @@ export default function QuestionDisplay({
 
                         <button
                             type="button"
-                            className="btn-pill2 mt-6 bg-green-600 hover:bg-green-700"
+                            className="btn-pill2 mt-6"
                             onClick={() => {
                                 setButtonDisabled(true);
                                 onNextLocation();

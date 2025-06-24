@@ -195,7 +195,7 @@ export default function UserManager() {
                                                     />
                                                     <button
                                                         onClick={() => handleImageDelete(user.id, img.id, img.image_path)}
-                                                        className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-700"
+                                                        className="absolute top-0 right-0 bg-orange-200 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-orange-300"
                                                         title="Delete image"
                                                         type="button"
                                                     >

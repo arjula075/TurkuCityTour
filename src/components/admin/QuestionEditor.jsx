@@ -67,13 +67,13 @@ export default function QuestionEditor({
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => saveQuestion(q)}
-                                    className="btn-pill-sm bg-blue-500 text-white px-3 py-1"
+                                    className="btn-pill-sm bg-slate-500 text-white px-3 py-1"
                                 >
                                     Save Question
                                 </button>
                                 <button
                                     onClick={() => deleteQuestion(q.id)}
-                                    className="btn-pill-sm bg-red-500 text-white px-3 py-1"
+                                    className="btn-pill-sm-delete"
                                 >
                                     Delete Question
                                 </button>
@@ -108,13 +108,13 @@ export default function QuestionEditor({
                                         </label>
                                         <button
                                             onClick={() => saveAnswer(q.id, a)}
-                                            className="btn-pill-sm bg-blue-500 text-white px-2 py-1"
+                                            className="btn-pill-sm text-white px-2 py-1"
                                         >
                                             Save
                                         </button>
                                         <button
                                             onClick={() => deleteAnswer(q.id, a.id)}
-                                            className="btn-pill-sm bg-red-500 text-white px-2 py-1"
+                                            className="btn-pill-sm-delete"
                                         >
                                             Delete
                                         </button>
@@ -123,7 +123,7 @@ export default function QuestionEditor({
 
                                 <button
                                     onClick={() => addAnswer(q.id)}
-                                    className="btn-pill-sm bg-green-500 text-white px-2 py-1"
+                                    className="btn-pill-sm"
                                 >
                                     + Add Answer
                                 </button>
@@ -133,7 +133,7 @@ export default function QuestionEditor({
 
                     <button
                         onClick={addQuestion}
-                        className="btn-pill-sm bg-green-600 text-white px-3 py-1"
+                        className="btn-pill-sm"
                     >
                         + Add Question
                     </button>

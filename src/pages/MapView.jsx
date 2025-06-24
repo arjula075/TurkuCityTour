@@ -214,7 +214,7 @@ export default function MapView() {
     return (
         <div className="p-4 bg-white">
             {!gameActive && (
-                <h2 className="text-5xl font-semibold mb-4 text-center">
+                <h2>
                     Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
                 </h2>
             )}
@@ -299,7 +299,7 @@ export default function MapView() {
                     <div className="text-center space-y-4">
                         <FinalMessage message={profile?.message ?? 'Thanks for playing!'} />
                         <button
-                            className="btn-pill2 bg-blue-600"
+                            className="btn-pill2"
                             onClick={() => {
                                 setGameActive(false);
                                 setGameEnded(true);
@@ -320,10 +320,10 @@ export default function MapView() {
                 {!gameActive && !gameEnded && (
                     <>
                         <button
-                            className="btn-pill2 bg-blue-600"
+                            className="btn-pill2"
                             onClick={startTraining}
                             disabled={trainingMode}
-                        >🧪 Exercise</button>
+                        >Exercise</button>
                         <button className="btn-pill2" onClick={() => supabase.auth.signOut().then(() => navigate('/'))}>
                             Log Out
                         </button>
@@ -335,13 +335,13 @@ export default function MapView() {
                 )}
 
                 {isAdmin && (
-                    <button onClick={() => navigate('/admin')} className="btn-pill2 bg-blue-600">
+                    <button onClick={() => navigate('/admin')} className="btn-pill2">
                         Admin View
                     </button>
                 )}
                 {isAdmin && locations[currentIndex] && (
                     <button
-                        className="btn-pill2 bg-blue-600 mt-4"
+                        className="btn-pill2 mt-4"
                         onClick={() => {
                             const loc = locations[currentIndex];
                             setLocation({ lat: loc.latitude, lng: loc.longitude });
@@ -351,7 +351,7 @@ export default function MapView() {
                             alert(`Admin: User location set to ${loc.name}`);
                         }}
                     >
-                        beam me up, Scotty
+                        Beam me up, Scotty!
                     </button>
                 )}
             </div>

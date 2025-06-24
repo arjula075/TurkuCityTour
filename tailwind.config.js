@@ -1,9 +1,11 @@
+// tailwind.config.js
 module.exports = {
     important: true,
     theme: {
         fontFamily: {
-            display: ['Gilroy', 'sans-serif'],
-            body: ['Graphik', 'sans-serif'],
+            sans: ['Montserrat', 'sans-serif'], // Global default
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Montserrat', 'sans-serif'],
         },
         extend: {
             colors: {
@@ -13,9 +15,9 @@ module.exports = {
                 '96': '24rem',
                 '128': '32rem',
             },
-        }
+        },
     },
     variants: {
-        opacity: ['responsive', 'hover']
-    }
-}
+        opacity: ['responsive', 'hover'],
+    },
+};

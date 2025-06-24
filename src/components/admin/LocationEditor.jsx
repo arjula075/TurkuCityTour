@@ -124,7 +124,7 @@ export default function LocationEditor({
                                         <div className="flex justify-end">
                                             <button
                                                 onClick={() => onDelete(loc.id)}
-                                                className="btn-pill-sm bg-red-500 text-white"
+                                                className="btn-pill-sm-delete"
                                             >
                                                 Delete
                                             </button>

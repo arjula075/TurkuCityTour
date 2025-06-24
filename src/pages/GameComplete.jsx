@@ -21,7 +21,7 @@ export default function GameComplete() {
             <h1 className="text-5xl font-bold mb-4">🎉 Game Complete!</h1>
             <p className="text-3xl mb-6 whitespace-pre-line">{message}</p>
             <button
-                className="btn-pill2 bg-blue-600"
+                className="btn-pill2"
                 onClick={() => window.location.href = '/'}
             >
                 Back to Start

@@ -63,13 +63,13 @@ export default function HintEditor({
                                         />
                                         <button
                                             onClick={() => saveHint(hint)}
-                                            className="btn-pill-sm bg-blue-500 text-white px-3 py-1"
+                                            className="btn-pill-sm text-white px-3 py-1"
                                         >
                                             Save
                                         </button>
                                         <button
                                             onClick={() => deleteHint(hint.id)}
-                                            className="btn-pill-sm bg-red-500 text-white px-3 py-1"
+                                            className="btn-pill-sm-delete"
                                         >
                                             Delete
                                         </button>
@@ -82,7 +82,7 @@ export default function HintEditor({
                     <div className="pt-2">
                         <button
                             onClick={addHint}
-                            className="btn-pill-sm bg-blue-500 text-white px-3 py-1"
+                            className="btn-pill-sm text-white px-3 py-1"
                         >
                             + Add Hint
                         </button>
