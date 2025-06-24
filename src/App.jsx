@@ -1,6 +1,6 @@
 // TurkuCityTour/src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import Login from './pages/Login';
 import MapView from './pages/MapView';
@@ -9,7 +9,7 @@ import Register from './pages/Register';
 import AdminView from './pages/AdminView';
 import GameComplete from './pages/GameComplete';
 
-// ⛔ Route Guard: Admin only
+// Admin route guard wrapper component
 function AdminRoute({ children }) {
   const { profile } = useAuthContext();
   if (!profile?.is_admin) {
@@ -18,24 +18,51 @@ function AdminRoute({ children }) {
   return children;
 }
 
-function App() {
-  return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          <Route path="/map" element={<MapView />} />
-          <Route path="/complete" element={<FinalMessage />} />
-          <Route path="/game-complete" element={<GameComplete />} />
-          <Route path="/admin" element={
+// Routes definition
+const router = createBrowserRouter(
+    [
+      {
+        path: '/',
+        element: <Login />,
+      },
+      {
+        path: '/register',
+        element: <Register />,
+      },
+      {
+        path: '/map',
+        element: <MapView />,
+      },
+      {
+        path: '/complete',
+        element: <FinalMessage />,
+      },
+      {
+        path: '/game-complete',
+        element: <GameComplete />,
+      },
+      {
+        path: '/admin',
+        element: (
             <AdminRoute>
               <AdminView />
             </AdminRoute>
-          } />
-        </Routes>
-      </Router>
-    </AuthProvider>
+        ),
+      },
+    ],
+    {
+      future: {
+        v7_startTransition: true,
+        // You can add other future flags here as needed
+      },
+    }
+);
+
+function App() {
+  return (
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
   );
 }
 

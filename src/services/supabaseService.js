@@ -204,3 +204,18 @@ export async function fetchUserProfile(userId) {
 
     return data;
 }
+
+export const adminUsers = {
+    async fetchAll() {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) throw error;
+        return data;
+    },
+    async update(id, fields) {
+        const { error } = await supabase
+            .from('users')
+            .update(fields)
+            .eq('id', id);
+        if (error) throw error;
+    },
+};
