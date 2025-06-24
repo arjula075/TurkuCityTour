@@ -213,21 +213,25 @@ export default function MapView() {
 
     return (
         <div className="p-4 bg-white">
-            <h2 className="text-5xl font-semibold mb-4 text-center">
-                Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
-            </h2>
+            {!gameActive && (
+                <h2 className="text-5xl font-semibold mb-4 text-center">
+                    Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
+                </h2>
+            )}
 
-            {location ? (
-                <MapContainer center={[location.lat, location.lng]} zoom={15} style={{ height: "40vh" }}>
-                    <TileLayer
-                        url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
-                        attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'
-                    />
-                    <Marker position={[location.lat, location.lng]} />
-                    <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser}/>
-                    <TrainingClickHandler />
-                </MapContainer>
-            ) : <p>Getting location...</p>}
+            {!showQuestion && (
+                location ? (
+                    <MapContainer center={[location.lat, location.lng]} zoom={15} style={{ height: "40vh" }}>
+                        <TileLayer
+                            url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
+                            attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'
+                        />
+                        <Marker position={[location.lat, location.lng]} />
+                        <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser}/>
+                        <TrainingClickHandler />
+                    </MapContainer>
+                ) : <p>Getting location...</p>
+            )}
 
             <div className="mt-6 mx-auto space-y-4">
                 {!gameActive && !gameEnded && (
@@ -244,7 +248,7 @@ export default function MapView() {
                     >Start Game</button>
                 )}
 
-                {gameActive && !guessed && locations[currentIndex] && (
+                {gameActive && !guessed && locations[currentIndex] && !showQuestion && (
                     <HintDisplay
                         location={locations[currentIndex]}
                         hintIndex={hintIndex}
@@ -254,7 +258,7 @@ export default function MapView() {
                     />
                 )}
 
-                {gameActive && guessed && currentLoc && location && (
+                {gameActive && guessed && currentLoc && location && !showQuestion && (
                     <div className="text-center p-4 bg-gray-100 rounded">
                         <p className="text-4xl font-semibold">
                             🎯 Great! Now move to the location:

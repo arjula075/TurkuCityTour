@@ -13,6 +13,7 @@ export default function QuestionEditor({
                                            deleteAnswer,
                                            addAnswer,
                                        }) {
+
     return (
         <div className="mt-10">
             <h2 className="text-xl font-semibold mb-2">Questions</h2>
@@ -23,12 +24,29 @@ export default function QuestionEditor({
                     className="mb-5 border p-4 rounded shadow-sm bg-white flex flex-col gap-4"
                 >
                     {/* Question inputs */}
+                    <label className="text-sm font-medium mb-1" htmlFor={`header-${q.id}`}>
+                        Question Header
+                    </label>
                     <input
-                        className="input-field"
+                        id={`header-${q.id}`}
+                        className="input-admin"
                         type="text"
-                        value={q.question_text}
-                        onChange={(e) => updateQuestionText(q.id, e.target.value)}
-                        placeholder="Question text"
+                        value={q.question_header || ''}
+                        onChange={(e) => updateQuestionText(q.id, 'question_header', e.target.value)}
+                        placeholder="Question header"
+                    />
+
+                    <label className="text-sm font-medium mb-1" htmlFor={`body-${q.id}`}>
+                        Question body
+                    </label>
+
+                    <input
+                        id={`body-${q.id}`}
+                        className="input-admin"
+                        type="text"
+                        value={q.question_body || ''}
+                        onChange={(e) => updateQuestionText(q.id, 'question_body', e.target.value)}
+                        placeholder="Question body"
                     />
 
                     <div className="flex gap-2">
@@ -55,7 +73,7 @@ export default function QuestionEditor({
                                 className="flex items-center gap-2 my-2"
                             >
                                 <input
-                                    className="input-field flex-grow"
+                                    className="input-admin flex-grow"
                                     type="text"
                                     value={a.answer_text}
                                     onChange={(e) =>

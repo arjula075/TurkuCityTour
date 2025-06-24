@@ -128,10 +128,10 @@ export default function AdminView() {
 
     // Questions and Answers handlers
 
-    const updateQuestionText = (questionId, newText) => {
+    const updateQuestionText = (questionId, field, value) => {
         setQuestions((prev) =>
             prev.map((q) =>
-                q.id === questionId ? { ...q, question_text: newText } : q
+                q.id === questionId ? { ...q, [field]: value } : q
             )
         );
     };
@@ -189,7 +189,8 @@ export default function AdminView() {
     const saveQuestion = async (question) => {
         try {
             await adminQuestions.update(question.id, {
-                question_text: question.question_text,
+                question_body: question.question_body,
+                question_header: question.question_header,
                 correct_answer: question.correct_answer,
             });
             alert('Question saved');

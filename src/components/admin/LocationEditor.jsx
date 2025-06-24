@@ -49,33 +49,53 @@ export default function LocationEditor({
                     {locations.map((loc) => (
                         <SortableItem key={loc.id} id={loc.id}>
                             <div className="p-4 border rounded shadow-sm space-y-3 bg-white">
+
+                                <label className="text-sm font-medium mb-1" htmlFor={`name-${loc.id}`}>
+                                    Location Name:
+                                </label>
                                 <input
+                                    id={`name-${loc.id}`}
                                     type="text"
-                                    className="input-field w-full"
+                                    className="input-admin w-full"
                                     value={loc.name ?? ''}
                                     placeholder="Location name"
                                     onChange={(e) => updateLocationField(loc.id, 'name', e.target.value)}
                                 />
+
+                                <label className="text-sm font-medium mb-1" htmlFor={`description-${loc.id}`}>
+                                    Location Description:
+                                </label>
                                 <textarea
-                                    className="input-field w-full"
+                                    id={`description-${loc.id}`}
+                                    className="input-admin w-full"
                                     value={loc.description ?? ''}
                                     placeholder="Location description"
                                     onChange={(e) => updateLocationField(loc.id, 'description', e.target.value)}
                                 />
+
+                                <label className="text-sm font-medium mb-1" htmlFor={`latitude-${loc.id}`}>
+                                    Latitude:
+                                </label>
                                 <input
+                                    id={`latitude-${loc.id}`}
                                     type="number"
                                     step="any"
-                                    className="input-field w-full"
+                                    className="input-admin w-full"
                                     value={loc.latitude ?? ''}
                                     placeholder="Latitude"
                                     onChange={(e) =>
                                         updateLocationField(loc.id, 'latitude', e.target.value === '' ? null : parseFloat(e.target.value))
                                     }
                                 />
+
+                                <label className="text-sm font-medium mb-1" htmlFor={`longitude-${loc.id}`}>
+                                    Longitude:
+                                </label>
                                 <input
+                                    id={`longitude-${loc.id}`}
                                     type="number"
                                     step="any"
-                                    className="input-field w-full"
+                                    className="input-admin w-full"
                                     value={loc.longitude ?? ''}
                                     placeholder="Longitude"
                                     onChange={(e) =>
@@ -83,7 +103,6 @@ export default function LocationEditor({
                                     }
                                 />
 
-                                {/* ✅ FIXED: call onSetCoordinates with the right loc */}
                                 <button
                                     className="text-blue-600 underline"
                                     onClick={() => onSetCoordinates(loc)}
@@ -101,6 +120,7 @@ export default function LocationEditor({
                                 </div>
                             </div>
                         </SortableItem>
+
                     ))}
                 </SortableContext>
             </DndContext>

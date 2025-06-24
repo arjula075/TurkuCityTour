@@ -124,7 +124,8 @@ export const fetchLocationsWithHintsQuestionsAnswers = () =>
         ),
         questions (
           id,
-          question_text,
+          question_header,
+          question_body,
           correct_answer,
           answers (
             id,
