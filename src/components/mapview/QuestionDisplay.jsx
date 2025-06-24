@@ -32,11 +32,11 @@ export default function QuestionDisplay({
 
     return (
         <div className="mt-6">
-            <h3 className="text-4xl font-bold mb-4">{question?.question_body}</h3>
+            <h3 className="text-6xl font-bold mb-4">{question?.question_body}</h3>
 
             <form className="space-y-4" onSubmit={e => e.preventDefault()}>
                 {question?.answers?.map((ans) => (
-                    <label key={ans.id} className="flex items-center space-x-3 text-2xl">
+                    <label key={ans.id} className="flex items-center space-x-3 text-5xl">
                         <input
                             type="radio"
                             name="answer"
@@ -44,9 +44,9 @@ export default function QuestionDisplay({
                             disabled={submitted}
                             checked={selectedAnswer === ans.id}
                             onChange={() => setSelectedAnswer(ans.id)}
-                            className="form-radio text-blue-600 text-3xl"
+                            className="form-radio text-gray-600 text-6xl"
                         />
-                        <span>{ans.answer_text}</span>
+                        <span className="bg-gray-100 block w-full">{ans.answer_text}</span>
                     </label>
                 ))}
 
