@@ -1,9 +1,3 @@
-// Here is the refactored version of your MapView file, with separate components for:
-// - HintDisplay
-// - QuestionDisplay
-// - TrainingPrompt
-// These are placed under `/components/mapview/`. The main MapView is now cleaner.
-
 import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,11 +15,10 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
-import HintDisplay from '../components/mapview//HintDisplay';
+import HintDisplay from '../components/mapview/HintDisplay';
 import QuestionDisplay from '../components/mapview/QuestionDisplay';
 import TrainingPrompt from '../components/mapview/TrainingPrompt';
 
-// Fix leaflet default icons
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
     iconUrl: markerIcon,
@@ -52,6 +45,11 @@ export default function MapView() {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [quizComplete, setQuizComplete] = useState(false);
     const [centerOnUser, setCenterOnUser] = useState(true);
+    const [submitted, setSubmitted] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(null);
+    const [buttonDisabled, setButtonDisabled] = useState(false);
+    const [gameEnded, setGameEnded] = useState(false);
+
     const isAdmin = profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
 
@@ -100,10 +98,8 @@ export default function MapView() {
         };
     }, []);
 
-
     useEffect(() => {
         if (!waiting || !locations[currentIndex]) return;
-
         const id = navigator.geolocation.watchPosition(
             (pos) => {
                 const dist = getDistance(pos.coords.latitude, pos.coords.longitude, locations[currentIndex].latitude, locations[currentIndex].longitude);
@@ -118,6 +114,12 @@ export default function MapView() {
 
         return () => navigator.geolocation.clearWatch(id);
     }, [waiting, locations, currentIndex]);
+
+    useEffect(() => {
+        if (showQuestion) {
+            setQuizComplete(false);
+        }
+    }, [showQuestion]);
 
     const getDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371e3;
@@ -135,8 +137,6 @@ export default function MapView() {
         setTrainingComplete(false);
         alert("Training started!");
     };
-
-
 
     const handleMapClick = (e) => {
         if (trainingMode) {
@@ -181,7 +181,29 @@ export default function MapView() {
         return null;
     }
 
-    // Calculate distance to next location
+    const onNextLocation = () => {
+        setButtonDisabled(true);
+        setQuizComplete(true);
+        setShowQuestion(false);
+        setGuessed(false);
+        setWaiting(false);
+        setHintIndex(0);
+        setSelectedAnswer(null);
+        setSubmitted(null);
+        setIsCorrect(null);
+
+        setTimeout(() => {
+            if (currentIndex < locations.length - 1) {
+                setCurrentIndex(i => i + 1);
+                setQuizComplete(false);
+                setButtonDisabled(false);
+            } else {
+                navigate('/game-complete'); // ✅ redirect to new page
+            }
+        }, 300);
+    };
+
+
     const currentLoc = locations[currentIndex];
     const distanceToCurrent = location && currentLoc
         ? getDistance(location.lat, location.lng, currentLoc.latitude, currentLoc.longitude)
@@ -205,8 +227,8 @@ export default function MapView() {
                 </MapContainer>
             ) : <p>Getting location...</p>}
 
-            <div className="mt-6 max-w-md mx-auto space-y-4">
-                {!gameActive && (
+            <div className="mt-6 mx-auto space-y-4">
+                {!gameActive && !gameEnded && (
                     <button
                         className="btn-pill2"
                         onClick={async () => {
@@ -246,33 +268,50 @@ export default function MapView() {
                         question={locations[currentIndex]?.questions?.[0]}
                         selectedAnswer={selectedAnswer}
                         setSelectedAnswer={setSelectedAnswer}
+                        submitted={submitted}
+                        setSubmitted={setSubmitted}
+                        isCorrect={isCorrect}
+                        setIsCorrect={setIsCorrect}
+                        buttonDisabled={buttonDisabled}
+                        setButtonDisabled={setButtonDisabled}
                         onAnsweredCorrect={async () => {
                             await markQuestionAsAnsweredCorrectly(user.id, locations[currentIndex].id);
-                            setQuizComplete(true);
                         }}
+                        onNextLocation={onNextLocation}
                     />
                 )}
 
-                {quizComplete && (
-                    currentIndex < locations.length - 1 ? (
+                {quizComplete && currentIndex < locations.length - 1 && (
+                    <button
+                        className="btn-pill2 bg-green-600"
+                        onClick={onNextLocation}
+                        disabled={buttonDisabled}
+                    >Next Location</button>
+                )}
+
+                {quizComplete && currentIndex >= locations.length - 1 && !gameEnded && (
+                    <div className="text-center space-y-4">
+                        <FinalMessage message={profile?.message ?? 'Thanks for playing!'} />
                         <button
-                            className="btn-pill2 bg-green-600"
+                            className="btn-pill2 bg-blue-600"
                             onClick={() => {
-                                setCurrentIndex((i) => i + 1);
-                                setHintIndex(0);
+                                setGameActive(false);
+                                setGameEnded(true);
+                                setCurrentIndex(0);
+                                setScore(0);
                                 setGuessed(false);
                                 setWaiting(false);
                                 setShowQuestion(false);
                                 setSelectedAnswer(null);
+                                setSubmitted(false);
+                                setIsCorrect(null);
                                 setQuizComplete(false);
                             }}
-                        >Next Location</button>
-                    ) : (
-                        <FinalMessage message={profile?.message ?? 'Thanks for playing!'} />
-                    )
+                        >End Game</button>
+                    </div>
                 )}
 
-                {!gameActive && (
+                {!gameActive && !gameEnded && (
                     <>
                         <button
                             className="btn-pill2 bg-blue-600"
@@ -292,6 +331,21 @@ export default function MapView() {
                 {isAdmin && (
                     <button onClick={() => navigate('/admin')} className="btn-pill2 bg-blue-600">
                         Admin View
+                    </button>
+                )}
+                {isAdmin && locations[currentIndex] && (
+                    <button
+                        className="btn-pill2 bg-blue-600 mt-4"
+                        onClick={() => {
+                            const loc = locations[currentIndex];
+                            setLocation({ lat: loc.latitude, lng: loc.longitude });
+                            setGuessed(true);
+                            setWaiting(true);
+                            setShowQuestion(true);
+                            alert(`Admin: User location set to ${loc.name}`);
+                        }}
+                    >
+                        beam me up, Scotty
                     </button>
                 )}
             </div>

@@ -58,7 +58,7 @@ export default function Register() {
 
     return (
         <div className="p-4 max-w-md mx-auto">
-            <h1 className="text-xl mb-4">Register</h1>
+            <h1 className="text-5xl mb-4">Register</h1>
             <form onSubmit={handleRegister} className="flex flex-col gap-4">
                 <input
                     type="text"
@@ -67,7 +67,7 @@ export default function Register() {
                     value={form.first_name}
                     onChange={handleChange}
                     required
-                    className="input-base"
+                    className="input-gray"
                 />
                 <input
                     type="text"
@@ -76,7 +76,7 @@ export default function Register() {
                     value={form.last_name}
                     onChange={handleChange}
                     required
-                    className="input-base"
+                    className="input-gray"
                 />
                 <input
                     type="email"
@@ -85,7 +85,7 @@ export default function Register() {
                     value={form.email}
                     onChange={handleChange}
                     required
-                    className="input-base"
+                    className="input-gray"
                 />
                 <input
                     type="password"
@@ -94,12 +94,12 @@ export default function Register() {
                     value={form.password}
                     onChange={handleChange}
                     required
-                    className="input-base"
+                    className="input-gray"
                 />
                 {error && <p className="text-red-600">{error}</p>}
                 <button
                     type="submit"
-                    className="button-base button-green"
+                    className="btn-pill2"
                 >
                     Register
                 </button>

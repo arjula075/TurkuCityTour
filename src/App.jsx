@@ -7,6 +7,7 @@ import MapView from './pages/MapView';
 import FinalMessage from './pages/FinalMessage';
 import Register from './pages/Register';
 import AdminView from './pages/AdminView';
+import GameComplete from './pages/GameComplete';
 
 // ⛔ Route Guard: Admin only
 function AdminRoute({ children }) {
@@ -26,6 +27,7 @@ function App() {
             <Route path="/register" element={<Register />} />
           <Route path="/map" element={<MapView />} />
           <Route path="/complete" element={<FinalMessage />} />
+          <Route path="/game-complete" element={<GameComplete />} />
           <Route path="/admin" element={
             <AdminRoute>
               <AdminView />
