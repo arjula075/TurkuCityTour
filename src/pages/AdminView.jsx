@@ -371,7 +371,7 @@ export default function AdminView() {
 
             <div className="mb-6 mt-10">
                 <label htmlFor="location-select" className="block mb-2 font-semibold">
-                    Select Location for Hints:
+                    Select Location which details are edited:
                 </label>
                 <select
                     id="location-select"
@@ -390,6 +390,7 @@ export default function AdminView() {
             {Array.isArray(hints) && (
                 <HintEditor
                     hints={hints}
+                    locationName={selectedLocationName}
                     updateHintText={updateHintText}
                     saveHint={saveHint}
                     deleteHint={deleteHint}
@@ -407,6 +408,7 @@ export default function AdminView() {
 
             <QuestionEditor
                 questions={questions}
+                locationName={selectedLocationName}
                 updateQuestionText={updateQuestionText}
                 toggleCorrectAnswer={toggleCorrectAnswer}
                 saveQuestion={saveQuestion}
