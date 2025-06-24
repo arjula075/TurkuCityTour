@@ -30,10 +30,12 @@ export default function QuestionDisplay({
         setButtonDisabled(false); // Reset when new question is shown
     }, [question?.id, setSubmitted, setIsCorrect, setButtonDisabled]);
 
+    console.log(question);
+
     return (
         <div className="mt-6">
-            <h3 className="text-6xl font-bold mb-4">{question?.question_body}</h3>
-
+            <h3 className="text-6xl font-bold mb-4">{question?.question_header}</h3>
+            <p className="whitespace-pre-line text-4xl mb-6">{question?.question_body}</p>
             <form className="space-y-4" onSubmit={e => e.preventDefault()}>
                 {question?.answers?.map((ans) => (
                     <label key={ans.id} className="flex items-center space-x-3 text-5xl">
