@@ -9,6 +9,7 @@ const handle = async (promise) => {
 };
 
 // --- Public APIs ---
+export { adminImages } from './adminImages';
 
 export const fetchAllHints = () =>
     handle(supabase.from('hints').select('*').order('hint_order', { ascending: true }));
@@ -218,4 +219,34 @@ export const adminUsers = {
             .eq('id', id);
         if (error) throw error;
     },
+};
+
+const bucketName = import.meta.env.VITE_IMAGE_BUCKET_NAME;
+
+export const storage = {
+    uploadFile: async (filePath, file) => {
+        console.log('uploadFile called with:', { filePath, file });
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .upload(filePath, file, { upsert: true });
+        if (error) throw error;
+        return data;
+    },
+
+    getSignedUrl: async (filePath, expiresInSec = 60) => {
+        console.log('getSignedUrl called with:', { filePath, expiresInSec });
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .createSignedUrl(filePath, expiresInSec);
+        if (error) throw error;
+        return data.signedUrl;
+    },
+
+    deleteFile: async (filePath) => {
+        const { data, error } = await supabase.storage
+            .from(bucketName)
+            .remove([filePath]);
+        if (error) throw error;
+        return data;
+    }
 };
