@@ -21,7 +21,7 @@ export default function QuestionEditor({
             {/* Accordion Header */}
             <button
                 onClick={() => setIsOpen((prev) => !prev)}
-                className="w-full px-4 py-3 text-left bg-gray-100 hover:bg-gray-200 flex justify-between items-center"
+                className="w-full px-4 py-3 text-left bg-gray-300 hover:bg-gray-400 flex justify-between items-center"
             >
                 <span className="text-xl font-semibold">Questions for {locationName || 'this location'}</span>
                 <span className="text-gray-500 text-sm">{isOpen ? '▲' : '▼'}</span>

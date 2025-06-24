@@ -11,6 +11,8 @@ import LocationEditor from '../components/admin/LocationEditor';
 import HintEditor from '../components/admin/HintEditor';
 import QuestionEditor from '../components/admin/QuestionEditor';
 import MapCoordinatePicker from '../components/admin/MapCoordinatePicker';
+import UserManager from '../components/admin/UserManager';
+
 
 export default function AdminView() {
     const [locations, setLocations] = useState([]);
@@ -358,7 +360,8 @@ export default function AdminView() {
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
-
+            <div className="bg-gray-100 p-6 rounded-lg shadow-inner mt-12">
+                <h2 className="text-2xl font-semibold mb-4">Location Management</h2>
             <LocationEditor
                 locations={locations}
                 setLocations={setLocations}
@@ -430,6 +433,9 @@ export default function AdminView() {
                     onSave={handleSaveCoordinates}
                 />
             )}
+            </div>
+
+            <UserManager />
 
         </div>
     );

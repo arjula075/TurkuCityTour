@@ -46,15 +46,13 @@ export default function LocationEditor({
 
     return (
         <div className="space-y-4">
-            <h2 className="text-xl font-semibold mb-2">Manage Locations</h2>
-
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={locations.map((loc) => loc.id)} strategy={verticalListSortingStrategy}>
                     {locations.map((loc) => (
                         <SortableItem key={loc.id} id={loc.id}>
                             <div className="border rounded shadow bg-white">
                                 <button
-                                    className="w-full text-left px-4 py-3 bg-gray-100 hover:bg-gray-200 flex justify-between items-center"
+                                    className="w-full text-left px-4 py-3 bg-gray-300 hover:bg-gray-400 flex justify-between items-center"
                                     onClick={() => toggleAccordion(loc.id)}
                                 >
                                     <span className="font-medium">{loc.name || 'Unnamed Location'}</span>
