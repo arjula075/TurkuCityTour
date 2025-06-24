@@ -132,6 +132,7 @@ export default function MapView() {
     };
 
     const startTraining = () => {
+        setCenterOnUser(false);
         setTrainingMode(true);
         setTrainingStep(0);
         setTrainingComplete(false);
@@ -147,6 +148,7 @@ export default function MapView() {
                 if (trainingStep === TRAINING_POINTS.length - 1) {
                     setTrainingComplete(true);
                     setTrainingMode(false);
+                    setCenterOnUser(true);
                 } else setTrainingStep((s) => s + 1);
             } else alert(`❌ Too far! ${Math.round(d)}m from ${point.name}`);
         } else if (gameActive && !guessed) {
