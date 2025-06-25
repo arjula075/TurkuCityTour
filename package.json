@@ -23,8 +23,11 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
+    "react-responsive-3d-carousel": "^2.1.5",
     "react-router-dom": "^6.22.3",
-    "uuid": "^11.1.0"
+    "swiper": "^11.2.8",
+    "uuid": "^11.1.0",
+    "yet-another-react-lightbox": "^3.23.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
