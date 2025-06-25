@@ -27,7 +27,7 @@ export default function GameComplete() {
                         imgMeta.map(img => storage.getSignedUrl(img.thumb_path))
                     );
                     const fullSignedUrls = await Promise.all(
-                        imgMeta.map(img => storage.getSignedUrl(img.file_path))
+                        imgMeta.map(img => storage.getSignedUrl(img.file_path, 600))
                     );
 
                     const imgObjects = imgMeta.map((img, i) => ({
