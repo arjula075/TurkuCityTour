@@ -58,7 +58,7 @@ export default function GameComplete() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen p-4">
+        <div className="flex flex-col min-h-[100dvh] p-4">
             {/* Top: Profile + Header */}
             <div className="flex flex-col items-center mb-2">
                 {profilePic && (
