@@ -46,4 +46,16 @@ export const adminImages = {
         if (error) throw error;
         return data;
     },
+    update: async (filter, fields) => {
+        console.log('adminImages.update called with:', { filter, fields });
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .update(fields)
+            .match(filter)
+            .select();
+
+        if (error) throw error;
+        return data;
+    },
+
 };

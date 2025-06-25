@@ -104,6 +104,24 @@ export default function UserManager() {
         }
     };
 
+    const handleProfileToggle = async (userId, imageId, currentValue) => {
+        try {
+            let blIsProfile = false;
+            console.log('Updating profile image:', userId, imageId, currentValue);
+            if (!currentValue) {
+                console.log('Setting profile image to true');
+                blIsProfile = true;
+            }
+            await adminImages.update({ id: imageId }, { is_profile_pic: blIsProfile });
+            await loadUserImages(userId); // reload after update
+        } catch (e) {
+            alert('Failed to update profile image: ' + e.message);
+        }
+    };
+
+    console.log(userImages);
+
+
     return (
         <div className="bg-gray-100 p-6 rounded-lg shadow-inner mt-12">
             <h2 className="text-2xl font-semibold mb-4">User Management</h2>
@@ -201,6 +219,14 @@ export default function UserManager() {
                                                     >
                                                         &times;
                                                     </button>
+                                                    <label className="absolute bottom-0 right-0 bg-white p-1 rounded-tl shadow-sm">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!img.is_profile_pic}
+                                                            onChange={() => handleProfileToggle(user.id, img.id, img.is_profile_pic)}
+                                                            title="Set as profile picture"
+                                                        />
+                                                    </label>
                                                 </div>
                                             ))}
                                         </div>
