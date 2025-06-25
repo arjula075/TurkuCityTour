@@ -35,6 +35,7 @@ export default function GameComplete() {
                         full: fullSignedUrls[i],
                         isProfile: img.is_profile_pic
                     }));
+                    console.log(imgObjects);
 
                     setImages(imgObjects);
 
