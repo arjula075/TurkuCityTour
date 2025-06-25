@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { adminUsers, storage, adminImages } from '../../services/supabaseService';
+import { createImageWithThumbnail } from '../../utils/imageHandling';
 
 export default function UserManager() {
     const [users, setUsers] = useState([]);
@@ -32,7 +33,7 @@ export default function UserManager() {
             // For each image, get signed url for preview
             const imagesWithUrls = await Promise.all(
                 images.map(async (img) => {
-                    const signedUrl = await storage.getSignedUrl(img.file_path, 300); // 5 min expiry
+                    const signedUrl = await storage.getSignedUrl(img.thumb_path, 300); // 5 min expiry
                     return { ...img, signedUrl };
                 })
             );
@@ -67,20 +68,37 @@ export default function UserManager() {
 
     // Upload image for user
     const handleImageUpload = async (userId, event) => {
+        console.log('Image upload for user', userId, event);
         const file = event.target.files[0];
         if (!file) return;
 
-        const filePath = `${userId}/${Date.now()}_${file.name}`;
-        const fileName = `${Date.now()}_${file.name}`;
+        const now = Date.now();
+
+        const fileName = `${now}_${file.name}`;
+        const thumbFileName = `thumb_${fileName}`;
+
+        const filePath = `${userId}/${fileName}`;
+        const thumbPath = `${userId}/${thumbFileName}`;
 
         try {
             // upload to storage
             console.log('Uploading image to storage:', filePath);
-            await storage.uploadFile(filePath, file);
+            const { originalFile, thumbnailFile, fileType } = await createImageWithThumbnail(file);
+
+            // Upload both files
+            await storage.uploadFile(filePath, originalFile);
+            await storage.uploadFile(thumbPath, thumbnailFile);
+
 
             // insert metadata into DB via adminImages service
             console.log('Inserting image metadata into DB:', filePath);
-            await adminImages.insert({ user_id: userId, file_path: filePath, file_name: fileName });
+            await adminImages.insert({
+                user_id: userId,
+                file_path: filePath,
+                file_name: fileName,
+                thumb_path: thumbPath,
+                is_profile_pic: false,
+                content_type: fileType,});
 
             // reload images list for user
             await loadUserImages(userId);
@@ -118,9 +136,6 @@ export default function UserManager() {
             alert('Failed to update profile image: ' + e.message);
         }
     };
-
-    console.log(userImages);
-
 
     return (
         <div className="bg-gray-100 p-6 rounded-lg shadow-inner mt-12">

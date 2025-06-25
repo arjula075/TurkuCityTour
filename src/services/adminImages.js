@@ -17,11 +17,11 @@ export const adminImages = {
     },
 
     // insert new image record (just metadata: user_id + image_path)
-    insert: async ({ user_id, file_path, filename }) => {
+    insert: async ({ user_id, file_path, filename, thumb_path, is_profile_pic, content_type }) => {
         console.log('adminImages.insert called with:', { user_id, file_path });
         const { data, error } = await supabase
             .from(TABLE_NAME)
-            .insert([{ user_id, file_path, filename }])
+            .insert([{ user_id, file_path, filename, thumb_path, is_profile_pic, content_type }])
             .single();
 
         if (error) throw error;

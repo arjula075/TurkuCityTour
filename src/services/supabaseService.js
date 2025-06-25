@@ -1,5 +1,6 @@
 // src/services/supabaseService.js
 import { supabase } from './supabaseClient';
+import { adminImages } from './adminImages';
 
 // Utility
 const handle = async (promise) => {
@@ -250,3 +251,19 @@ export const storage = {
         return data;
     }
 };
+
+export async function fetchProfileImageUrl(userId) {
+    const images = await adminImages.fetchByUserId(userId);
+    if (!images || images.length === 0) return null;
+
+    const profileImg = images.find((img) => img.is_profile_pic);
+    const selected = profileImg || null;
+
+    if (!selected?.file_path && !selected?.thumb_path) return null;
+
+    const signedUrl = await storage.getSignedUrl(
+        selected.thumb_path || selected.file_path,
+        300
+    );
+    return signedUrl;
+}
