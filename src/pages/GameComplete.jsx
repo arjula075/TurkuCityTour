@@ -58,44 +58,53 @@ export default function GameComplete() {
     };
 
     return (
-        <div className="p-4 text-center">
-            {profilePic && (
-                <img
-                    src={profilePic}
-                    alt="Profile"
-                    className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
-                />
-            )}
-
-            <h1 className="text-5xl font-bold mb-4">🎉 Game Complete!</h1>
-            <p className="text-4xl mb-6 whitespace-pre-line">{message}</p>
-
-            <button
-                className="btn-pill2"
-                onClick={() => window.location.href = '/'}
-            >
-                Back to Start
-            </button>
-
-            {images.length > 0 && (
-                <div className="mb-6 h-[300px] mt-6">
-                    <Carousel
-                        items={images.map((img, i) => (
-                            <img
-                                key={i}
-                                src={img.thumb}
-                                alt={`User pic ${i}`}
-                                className="rounded-xl object-cover h-[260px] mx-auto cursor-pointer"
-                                onClick={() => handleImageClick(i)}
-                            />
-                        ))}
-                        swipeable
-                        swipeDirection="vertical"
-                        autoPlay={false}
-                        containerHeight="100%"
+        <div className="flex flex-col min-h-screen p-4">
+            {/* Top: Profile + Header */}
+            <div className="flex flex-col items-center mb-2">
+                {profilePic && (
+                    <img
+                        src={profilePic}
+                        alt="Profile"
+                        className="w-24 h-24 rounded-full object-cover mb-2"
                     />
-                </div>
-            )}
+                )}
+                <h1 className="text-5xl font-bold">🎉 Game Complete!</h1>
+            </div>
+
+            {/* Middle: Scrollable Message */}
+            <div className="flex-1 overflow-y-auto px-2 py-4 text-center">
+                <p className="text-4xl whitespace-pre-line">{message}</p>
+            </div>
+
+            {/* Bottom: Button + Carousel */}
+            <div className="flex flex-col items-center gap-4 mt-2">
+                <button
+                    className="btn-pill2"
+                    onClick={() => window.location.href = '/'}
+                >
+                    Back to Start
+                </button>
+
+                {images.length > 0 && (
+                    <div className="w-full max-h-[300px]">
+                        <Carousel
+                            items={images.map((img, i) => (
+                                <img
+                                    key={i}
+                                    src={img.thumb}
+                                    alt={`User pic ${i}`}
+                                    className="rounded-xl object-cover h-[260px] mx-auto cursor-pointer"
+                                    onClick={() => handleImageClick(i)}
+                                />
+                            ))}
+                            swipeable
+                            swipeDirection="horizontal"
+                            autoPlay={false}
+                            containerHeight="100%"
+                        />
+                    </div>
+                )}
+            </div>
 
             <Lightbox
                 open={lightboxOpen}
