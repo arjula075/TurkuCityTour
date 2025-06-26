@@ -193,6 +193,8 @@ export default function MapView() {
         setSelectedAnswer(null);
         setSubmitted(null);
         setIsCorrect(null);
+        setCenterOnUser(true);
+
 
         setTimeout(() => {
             if (currentIndex < locations.length - 1) {
@@ -244,6 +246,7 @@ export default function MapView() {
                             setHintIndex(0);
                             setScore(0);
                             setGuessed(false);
+                            setCenterOnUser(false);
                         }}
                     >Start Game</button>
                 )}
@@ -282,6 +285,7 @@ export default function MapView() {
                         setButtonDisabled={setButtonDisabled}
                         onAnsweredCorrect={async () => {
                             await markQuestionAsAnsweredCorrectly(user.id, locations[currentIndex].id);
+                            setCenterOnUser(true);
                         }}
                         onNextLocation={onNextLocation}
                     />
