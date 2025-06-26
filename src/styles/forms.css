@@ -37,7 +37,15 @@
     h2 {
         @apply text-5xl font-sans tracking-tight text-center mb-4;
     }
-}
+
+
+    @layer utilities {
+         .carousel-speed-fast .carousel-3d-slide {
+             @apply transition duration-100;
+         }
+    }
+
+    }
 
 
 

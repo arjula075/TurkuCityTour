@@ -81,7 +81,6 @@ export const adminAnswers = {
     ...adminTable('answers'),
 
     toggleCorrectAnswer: (answerId, currentStatus) => {
-        console.log('toggleCorrectAnswer called with:', { answerId, currentStatus });
         return handle(
             supabase
                 .from('answers')
@@ -141,7 +140,6 @@ export const fetchLocationsWithHintsQuestionsAnswers = () =>
 
 export async function updateUserProgress(userId, locationId, hintsUsed) {
     try {
-        console.log('Updating user progress:', { userId, locationId, hintsUsed });
         const { data, error } = await supabase
             .from('user_progress')
             .upsert(
@@ -226,7 +224,6 @@ const bucketName = import.meta.env.VITE_IMAGE_BUCKET_NAME;
 
 export const storage = {
     uploadFile: async (filePath, file) => {
-        console.log('uploadFile called with:', { filePath, file });
         const { data, error } = await supabase.storage
             .from(bucketName)
             .upload(filePath, file, { upsert: true });
@@ -235,7 +232,6 @@ export const storage = {
     },
 
     getSignedUrl: async (filePath, expiresInSec = 60) => {
-        console.log('getSignedUrl called with:', { filePath, expiresInSec });
         const { data, error } = await supabase.storage
             .from(bucketName)
             .createSignedUrl(filePath, expiresInSec);

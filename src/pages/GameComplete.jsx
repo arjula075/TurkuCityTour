@@ -100,7 +100,7 @@ export default function GameComplete() {
                 </button>
 
                 {images.length > 0 && (
-                    <div className="w-full max-h-[300px]">
+                    <div className="w-full max-h-[300px] carousel-speed-fast">
                         <Carousel
                             items={images.map((img, i) => (
                                 <img

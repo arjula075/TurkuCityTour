@@ -29,7 +29,6 @@ export default function UserManager() {
     async function loadUserImages(userId) {
         try {
             const images = await adminImages.fetchByUserId(userId); // fetch DB rows: id, image_path, etc.
-            console.log('Images for user', userId, images);
             // For each image, get signed url for preview
             const imagesWithUrls = await Promise.all(
                 images.map(async (img) => {
@@ -68,7 +67,6 @@ export default function UserManager() {
 
     // Upload image for user
     const handleImageUpload = async (userId, event) => {
-        console.log('Image upload for user', userId, event);
         const file = event.target.files[0];
         if (!file) return;
 
@@ -82,7 +80,6 @@ export default function UserManager() {
 
         try {
             // upload to storage
-            console.log('Uploading image to storage:', filePath);
             const { originalFile, thumbnailFile, fileType } = await createImageWithThumbnail(file);
 
             // Upload both files
@@ -91,7 +88,6 @@ export default function UserManager() {
 
 
             // insert metadata into DB via adminImages service
-            console.log('Inserting image metadata into DB:', filePath);
             await adminImages.insert({
                 user_id: userId,
                 file_path: filePath,
@@ -125,9 +121,7 @@ export default function UserManager() {
     const handleProfileToggle = async (userId, imageId, currentValue) => {
         try {
             let blIsProfile = false;
-            console.log('Updating profile image:', userId, imageId, currentValue);
             if (!currentValue) {
-                console.log('Setting profile image to true');
                 blIsProfile = true;
             }
             await adminImages.update({ id: imageId }, { is_profile_pic: blIsProfile });

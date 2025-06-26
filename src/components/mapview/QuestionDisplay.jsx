@@ -30,8 +30,6 @@ export default function QuestionDisplay({
         setButtonDisabled(false); // Reset when new question is shown
     }, [question?.id, setSubmitted, setIsCorrect, setButtonDisabled]);
 
-    console.log(question);
-
     return (
         <div className="mt-6">
             <h3 className="text-6xl font-bold mb-4">{question?.question_header}</h3>

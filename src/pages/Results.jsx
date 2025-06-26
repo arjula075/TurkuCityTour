@@ -20,9 +20,6 @@ export default function Results() {
                     fetchCorrectAnswerResults(),
                     fetchTotalPointsResults()
                 ]);
-                console.log('Results:', hints, corrects, totals);
-
-                console.log(JSON.stringify(hints));
 
                 const hintAggregated = hints.reduce((acc, curr) => {
                     const key = curr.user_id;
