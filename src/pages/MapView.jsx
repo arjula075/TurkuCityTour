@@ -199,7 +199,7 @@ export default function MapView() {
         setSelectedAnswer(null);
         setSubmitted(null);
         setIsCorrect(null);
-        setCenterOnUser(true);
+        setCenterOnUser(false);
 
 
         setTimeout(() => {
