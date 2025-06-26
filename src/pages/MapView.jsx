@@ -162,6 +162,7 @@ export default function MapView() {
                 updateUserProgress(user.id, loc.id, pts);
                 setWaiting(true);
                 alert(`✅ ${pts} points. Now walk to the location.`);
+                setCenterOnUser(true);
             } else alert(`❌ Too far! ${Math.round(d)} meters.`);
         }
     };
@@ -293,7 +294,7 @@ export default function MapView() {
 
                 {quizComplete && currentIndex < locations.length - 1 && (
                     <button
-                        className="btn-pill2 bg-green-600"
+                        className="btn-pill2"
                         onClick={onNextLocation}
                         disabled={buttonDisabled}
                     >Next Location</button>
