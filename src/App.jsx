@@ -23,48 +23,50 @@ function AdminRoute({ children }) {
 // Routes definition
 const router = createBrowserRouter(
     [
-      {
-        path: '/',
-        element: <Login />,
-      },
-      {
-        path: '/register',
-        element: <Register />,
-      },
-      {
-        path: '/map',
-        element: <MapView />,
-      },
-      {
-        path: '/complete',
-        element: <FinalMessage />,
-      },
-      {
-        path: '/game-complete',
-        element: <GameComplete />,
-      },
-      {
-        path: '/admin',
-        element: (
-            <AdminRoute>
-              <AdminView />
-            </AdminRoute>
-        ),
-          path: '/results',
-          element: (
-              <AdminRoute>
-                  <Results />
-              </AdminRoute>
-          ),
-      },
+        {
+            path: '/',
+            element: <Login />,
+        },
+        {
+            path: '/register',
+            element: <Register />,
+        },
+        {
+            path: '/map',
+            element: <MapView />,
+        },
+        {
+            path: '/complete',
+            element: <FinalMessage />,
+        },
+        {
+            path: '/game-complete',
+            element: <GameComplete />,
+        },
+        {
+            path: '/admin',
+            element: (
+                <AdminRoute>
+                    <AdminView />
+                </AdminRoute>
+            ),
+        },
+        {
+            path: '/results',
+            element: (
+                <AdminRoute>
+                    <Results />
+                </AdminRoute>
+            ),
+        },
     ],
     {
-      future: {
-        v7_startTransition: true,
-        // You can add other future flags here as needed
-      },
+        future: {
+            v7_startTransition: true,
+        },
     }
 );
+
 
 function App() {
   return (
