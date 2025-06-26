@@ -267,3 +267,15 @@ export async function fetchProfileImageUrl(userId) {
     );
     return signedUrl;
 }
+
+export async function fetchHintsResults() {
+    return handle(supabase.from('hint_results').select('*'));
+}
+
+export async function fetchCorrectAnswerResults() {
+    return handle(supabase.from('correct_answer_results').select('*'));
+}
+
+export async function fetchTotalPointsResults() {
+    return handle(supabase.from('calculate_user_points').select('*'));
+}

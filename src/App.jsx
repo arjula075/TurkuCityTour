@@ -8,6 +8,7 @@ import FinalMessage from './pages/FinalMessage';
 import Register from './pages/Register';
 import AdminView from './pages/AdminView';
 import GameComplete from './pages/GameComplete';
+import Results from './pages/Results';
 import '@fontsource/montserrat';
 
 // Admin route guard wrapper component
@@ -49,6 +50,12 @@ const router = createBrowserRouter(
               <AdminView />
             </AdminRoute>
         ),
+          path: '/results',
+          element: (
+              <AdminRoute>
+                  <Results />
+              </AdminRoute>
+          ),
       },
     ],
     {

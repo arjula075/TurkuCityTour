@@ -221,6 +221,7 @@ export default function MapView() {
                     Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
                 </h2>
             )}
+            <p>Center on user: {centerOnUser}</p>
 
             {!showQuestion && (
                 location ? (
@@ -344,6 +345,11 @@ export default function MapView() {
                         Admin View
                     </button>
                 )}
+                {isAdmin && (
+                <button onClick={() => navigate('/results')} className="btn-pill2">
+                    Results
+                </button>
+            )}
                 {isAdmin && locations[currentIndex] && (
                     <button
                         className="btn-pill2 mt-4"
