@@ -3,6 +3,7 @@ import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import FinalMessage from './FinalMessage';
+import { logEvent } from '../utils/logger';
 import {
     fetchLocationsWithHintsQuestionsAnswers,
     updateUserProgress,
@@ -121,6 +122,10 @@ export default function MapView() {
         }
     }, [showQuestion]);
 
+    useEffect(() => {
+        mapViewLogEvent(`centerOnUser changed to ${centerOnUser}`);
+    }, [centerOnUser]);
+
     const getDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371e3;
         const φ1 = (lat1 * Math.PI) / 180;
@@ -214,6 +219,30 @@ export default function MapView() {
         ? getDistance(location.lat, location.lng, currentLoc.latitude, currentLoc.longitude)
         : null;
 
+    const getGameStateSnapshot = () => {
+        return {
+            gameActive,
+            currentIndex,
+            hintIndex,
+            score,
+            guessed,
+            waiting,
+            showQuestion,
+            selectedAnswer,
+            quizComplete,
+            centerOnUser,
+            submitted,
+            isCorrect,
+            gameEnded,
+        };
+    };
+
+    function mapViewLogEvent(text) {
+        const states = getGameStateSnapshot();
+        logEvent(text, states);
+    }
+
+
     return (
         <div className="p-4 bg-white">
             {!gameActive && (
@@ -221,7 +250,6 @@ export default function MapView() {
                     Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
                 </h2>
             )}
-            <p>Center on user: {centerOnUser}</p>
 
             {!showQuestion && (
                 location ? (
