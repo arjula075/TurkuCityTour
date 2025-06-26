@@ -137,6 +137,45 @@ export default function UserManager() {
         }
     };
 
+    const handleFolderUpload = async (userId, event) => {
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+
+        for (const file of files) {
+            try {
+                const now = Date.now();
+                const fileName = `${now}_${file.name}`;
+                const thumbFileName = `thumb_${fileName}`;
+
+                const filePath = `${userId}/${fileName}`;
+                const thumbPath = `${userId}/${thumbFileName}`;
+
+                const { originalFile, thumbnailFile, fileType } = await createImageWithThumbnail(file);
+
+                await storage.uploadFile(filePath, originalFile);
+                await storage.uploadFile(thumbPath, thumbnailFile);
+
+                await adminImages.insert({
+                    user_id: userId,
+                    file_path: filePath,
+                    file_name: fileName,
+                    thumb_path: thumbPath,
+                    is_profile_pic: false,
+                    content_type: fileType,
+                });
+            } catch (err) {
+                console.error(`Failed to upload ${file.name}:`, err);
+            }
+        }
+
+        // Reload image list once all uploads are done
+        await loadUserImages(userId);
+
+        // Clear input
+        event.target.value = null;
+    };
+
+
     return (
         <div className="bg-gray-100 p-6 rounded-lg shadow-inner mt-12">
             <h2 className="text-2xl font-semibold mb-4">User Management</h2>
@@ -245,10 +284,20 @@ export default function UserManager() {
                                                 </div>
                                             ))}
                                         </div>
+                                        <p>one file</p>
                                         <input
                                             type="file"
                                             accept="image/*"
                                             onChange={(e) => handleImageUpload(user.id, e)}
+                                            className="border p-1 rounded"
+                                        />
+                                        <p>directory</p>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            webkitdirectory="true"
+                                            onChange={(e) => handleFolderUpload(user.id, e)}
                                             className="border p-1 rounded"
                                         />
                                     </div>

@@ -13,6 +13,7 @@ export default function GameComplete() {
     const [profilePic, setProfilePic] = useState(null);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadData() {
@@ -35,7 +36,6 @@ export default function GameComplete() {
                         full: fullSignedUrls[i],
                         isProfile: img.is_profile_pic
                     }));
-                    console.log(imgObjects);
 
                     setImages(imgObjects);
 
@@ -46,16 +46,30 @@ export default function GameComplete() {
                 }
             } catch (err) {
                 console.error('Error loading GameComplete:', err.message);
+            } finally {
+                setLoading(false); // Hide loader once everything is done
             }
         }
 
         loadData();
     }, [user]);
 
+
     const handleImageClick = (index) => {
         setLightboxIndex(index);
         setLightboxOpen(true);
     };
+
+
+    if (loading) {
+        return (
+            <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-opacity-50"></div>
+            </div>
+        );
+    }
+    else {
+
 
     return (
         <div className="flex flex-col min-h-[100dvh] p-4">
@@ -114,4 +128,5 @@ export default function GameComplete() {
             />
         </div>
     );
+}
 }
