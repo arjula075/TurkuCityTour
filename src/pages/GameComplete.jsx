@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { fetchUserProfile, adminImages, storage } from '../services/supabaseService';
+import { fetchUserProfile, adminImages, storage, clearUserProgress } from '../services/supabaseService';
 import { Carousel } from 'react-responsive-3d-carousel';
 import 'react-responsive-3d-carousel/dist/styles.css';
 import Lightbox from 'yet-another-react-lightbox';
@@ -94,10 +94,36 @@ export default function GameComplete() {
             <div className="flex flex-col items-center gap-4 mt-2">
                 <button
                     className="btn-pill2"
-                    onClick={() => window.location.href = '/'}
+                    onClick={async () => {
+                        if (user?.id) {
+                            await clearUserProgress(user.id);
+                            window.location.href = '/';
+                        }
+                    }}
                 >
                     Back to Start
                 </button>
+                {/* ✅ New Download Button */}
+                {images.length > 0 && (
+                    <button
+                        className="btn-pill2"
+                        onClick={async () => {
+                            for (const img of images) {
+                                const response = await fetch(img.full);
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = 'photo.jpg'; // or use some unique name
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                            }
+                        }}
+                    >
+                        Download My Pictures
+                    </button>
+                )}
 
                 {images.length > 0 && (
                     <div className="w-full max-h-[300px] carousel-speed-fast">

@@ -24,6 +24,19 @@ L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
     iconUrl: markerIcon,
     shadowUrl: markerShadow,
+    iconSize: [50, 82],       // default is [25, 41], double it
+    iconAnchor: [25, 82],     // anchor at bottom center
+    popupAnchor: [1, -34],    // adjust popup
+    shadowSize: [68, 95],
+});
+
+const redIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: markerShadow,
+    iconSize: [50, 81],
+    iconAnchor: [25, 82],     // anchor at bottom center
+    popupAnchor: [1, -34],    // adjust popup
+    shadowSize: [68, 95],
 });
 
 export default function MapView() {
@@ -157,7 +170,6 @@ export default function MapView() {
             .select('*')
             .eq('user_id', userId);
 
-        console.log('Resume state:', progressData);
         if (error) {
             console.error('Error fetching user progress:', error);
             return;
@@ -171,7 +183,6 @@ export default function MapView() {
 
         // Sort locations by display_order or id
         const sorted = [...locations].sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
-        console.log('Sorted locations:', sorted);
         for (let i = 0; i < sorted.length; i++) {
             const loc = sorted[i];
             const progress = progressData.find(p => p.location_id === loc.id);
@@ -300,10 +311,24 @@ export default function MapView() {
         };
     };
 
+    const handleGiveUp = async () => {
+        const loc = locations[currentIndex];
+
+        // Update user progress with 0 points
+        await updateUserProgress(user.id, loc.id, 0);
+
+        // Set state: guessed, hintIndex reset, start walking to location
+        setGuessed(true);
+        setHintIndex(0);
+        setWaiting(true);
+        setCenterOnUser(true);
+        alert("❌ No worries. Now walk to the location to continue.");
+    };
+
     function mapViewLogEvent(text) {
         const states = getGameStateSnapshot();
         logEvent(text, states);
-    }
+    };
 
 
     return (
@@ -323,7 +348,14 @@ export default function MapView() {
                         />
                         <Marker position={[location.lat, location.lng]} />
                         <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser}/>
+                        {/* ✅ Red marker when user runs out of hints */}
                         <TrainingClickHandler />
+                        {guessed && waiting && currentLoc && (
+                            <Marker
+                                icon={redIcon}
+                                position={[currentLoc.latitude, currentLoc.longitude]}
+                            />
+                        )}
                     </MapContainer>
                 ) : <p>Getting location...</p>
             )}
@@ -351,6 +383,7 @@ export default function MapView() {
                         setHintIndex={setHintIndex}
                         score={score}
                         guessed={guessed}
+                        onGiveUp={handleGiveUp}
                     />
                 )}
 

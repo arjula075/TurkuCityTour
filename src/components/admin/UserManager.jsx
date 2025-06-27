@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { adminUsers, storage, adminImages } from '../../services/supabaseService';
+import { adminUsers, storage, adminImages, clearUserProgress } from '../../services/supabaseService';
 import { createImageWithThumbnail } from '../../utils/imageHandling';
 
 export default function UserManager() {
@@ -294,6 +294,23 @@ export default function UserManager() {
                                             onChange={(e) => handleFolderUpload(user.id, e)}
                                             className="border p-1 rounded"
                                         />
+                                        <div className="mt-2">
+                                            <button
+                                                className="btn-pill-sm"
+                                                onClick={async () => {
+                                                    if (window.confirm(`Clear progress for ${user.first_name} ${user.last_name}?`)) {
+                                                        try {
+                                                            await clearUserProgress(user.id);
+                                                            alert('User progress cleared.');
+                                                        } catch (e) {
+                                                            alert('Failed to clear progress: ' + e.message);
+                                                        }
+                                                    }
+                                                }}
+                                            >
+                                                Clear Game Progress
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
