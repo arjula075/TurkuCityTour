@@ -79,7 +79,7 @@ export default function MapView() {
             setLocation(fallback);
         }
 
-        fetchLocationsWithHintsQuestionsAnswers().then((data) => {
+        fetchLocationsWithHintsQuestionsAnswers().then(async (data) => {
             const sorted = data.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
             const formatted = sorted.map(loc => ({
                 ...loc,
@@ -90,7 +90,9 @@ export default function MapView() {
                 })) || [],
             }));
             setLocations(formatted);
+
         });
+
 
         return () => {
             if (watchId !== undefined) {
@@ -122,6 +124,12 @@ export default function MapView() {
         }
     }, [showQuestion]);
 
+    useEffect(() => {
+        if (user?.id && locations.length > 0) {
+            getResumeState(user.id, locations);
+        }
+    }, [user?.id, locations]);
+
     const getDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371e3;
         const φ1 = (lat1 * Math.PI) / 180;
@@ -138,6 +146,65 @@ export default function MapView() {
         setTrainingStep(0);
         setTrainingComplete(false);
         alert("Training started!");
+    };
+
+    const getResumeState = async (userId, locations) => {
+
+        if (!userId || !locations || locations.length === 0) return;
+
+        const { data: progressData, error } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', userId);
+
+        console.log('Resume state:', progressData);
+        if (error) {
+            console.error('Error fetching user progress:', error);
+            return;
+        }
+
+        if (!progressData || progressData.length === 0) {
+            return;
+        }
+
+        setGameActive(true);
+
+        // Sort locations by display_order or id
+        const sorted = [...locations].sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
+        console.log('Sorted locations:', sorted);
+        for (let i = 0; i < sorted.length; i++) {
+            const loc = sorted[i];
+            const progress = progressData.find(p => p.location_id === loc.id);
+
+            if (!progress) {
+                // Not started yet, resume from here
+                setCurrentIndex(i);
+                setHintIndex(0);
+                setGuessed(false);
+                setWaiting(false);
+                setShowQuestion(false);
+                return;
+            }
+
+            if (progress.answered_correctly === null) {
+                // Guessed correctly, walking toward location
+                setCurrentIndex(i);
+                setGuessed(true);
+                setWaiting(true);
+                setShowQuestion(false);
+                return;
+            }
+
+            if (progress.answered_correctly !== null) {
+                // Completed this one
+                continue;
+            }
+        }
+
+        // All locations completed
+        setGameEnded(true);
+        setGameActive(false);
+        navigate('/game-complete');
     };
 
     const handleMapClick = (e) => {
@@ -309,8 +376,8 @@ export default function MapView() {
                         setIsCorrect={setIsCorrect}
                         buttonDisabled={buttonDisabled}
                         setButtonDisabled={setButtonDisabled}
-                        onAnsweredCorrect={async () => {
-                            await markQuestionAsAnsweredCorrectly(user.id, locations[currentIndex].id);
+                        onAnsweredCorrect={async (isCorrect) => {
+                            await markQuestionAsAnsweredCorrectly(user.id, locations[currentIndex].id, isCorrect);
                             setCenterOnUser(true);
                         }}
                         onNextLocation={onNextLocation}

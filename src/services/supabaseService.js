@@ -147,7 +147,6 @@ export async function updateUserProgress(userId, locationId, hintsUsed) {
                     user_id: userId,
                     location_id: locationId,
                     hints_used: hintsUsed,
-                    answered_correctly: false,
                     completed_at: new Date().toISOString(),
                 },
                 {
@@ -177,10 +176,10 @@ export async function clearUserProgress(user_id) {
     }
 }
 
-export async function markQuestionAsAnsweredCorrectly(userId, locationId) {
+export async function markQuestionAsAnsweredCorrectly(userId, locationId, isCorrect) {
     const { error } = await supabase
         .from('user_progress')
-        .update({ answered_correctly: true })
+        .update({ answered_correctly: isCorrect })
         .eq('user_id', userId)
         .eq('location_id', locationId);
 

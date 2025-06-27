@@ -16,8 +16,8 @@ export default function useAnswerSubmission({
         setIsCorrect(correct);
         setSubmitted(true);
 
-        if (correct && typeof onAnsweredCorrect === 'function') {
-            await onAnsweredCorrect();
+        if (typeof onAnsweredCorrect === 'function') {
+            await onAnsweredCorrect(correct);
         }
     };
 

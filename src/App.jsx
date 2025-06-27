@@ -59,6 +59,11 @@ const router = createBrowserRouter(
                 </AdminRoute>
             ),
         },
+        // 👇 Catch-all fallback route
+        {
+            path: '*',
+            element: <Navigate to="/" replace />,
+        },
     ],
     {
         future: {
