@@ -81,6 +81,7 @@ export const adminAnswers = {
     ...adminTable('answers'),
 
     toggleCorrectAnswer: (answerId, currentStatus) => {
+        console.log("answerId: ", answerId, "currentStatus: ", currentStatus)
         return handle(
             supabase
                 .from('answers')

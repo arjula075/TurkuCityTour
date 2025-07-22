@@ -216,7 +216,7 @@ export default function AdminView() {
         try {
             const data = await adminQuestions.insert({
                 location_id: selectedLocationId,
-                question_text: '',
+                question_body: '',
                 correct_answer: '',
             });
             setQuestions((prev) => [...prev, data]);
