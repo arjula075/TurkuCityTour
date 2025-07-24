@@ -23,6 +23,8 @@ export default function GameAdminTab() {
     const [loading, setLoading] = useState(false);
     const [locationToSetCoords, setLocationToSetCoords] = useState(null);
     const [selectedGameId, setSelectedGameId] = useState(null);
+    const [savedInputs, setSavedInputs] = useState(new Set());
+    const [savedAnswerIds, setSavedAnswerIds] = useState(new Set());
 
     useEffect(() => {
         async function loadLocations() {
@@ -65,29 +67,55 @@ export default function GameAdminTab() {
         }
     }, [selectedGameId]);
 
-    async function addHint() {
-        if (!selectedLocationId) return alert('Select a location first');
-        const newHint = { location_id: selectedLocationId, hint_text: '', hint_order: hints.length + 1 };
-        try {
-            const data = await adminHints.insert(newHint);
-            setHints([...hints, ...data]);
-        } catch (e) {
-            alert('Failed to add hint: ' + e.message);
-        }
+    function flashSaved(id) {
+        setSavedInputs(prev => new Set(prev).add(id));
+        setTimeout(() => {
+            setSavedInputs(prev => {
+                const copy = new Set(prev);
+                copy.delete(id);
+                return copy;
+            });
+        }, 700);
     }
 
     function updateHintText(id, text) {
         setHints(hints.map(h => (h.id === id ? { ...h, hint_text: text } : h)));
     }
 
-    async function saveHint(hint) {
+    async function addHint() {
+        if (!selectedLocationId) return;
+
+        const newHint = {
+            location_id: selectedLocationId,
+            hint_text: '',
+            hint_order: Math.max(1, hints.length + 1),
+        };
+
         try {
-            await adminHints.update(hint.id, { hint_text: hint.hint_text, hint_order: hint.hint_order });
-            alert('Hint saved');
+            const data = await adminHints.insert(newHint);
+            setHints(prev => [...prev, ...data]);
         } catch (e) {
-            alert('Failed to save hint: ' + e.message);
+            console.error('Failed to add hint:', e.message);
         }
     }
+
+    async function saveHint(hint) {
+        // Only save if the hint already exists (i.e., has a real UUID)
+        if (!hint.id || hint.id.startsWith('new')) return;
+
+        try {
+            await adminHints.update(hint.id, {
+                hint_text: hint.hint_text,
+                hint_order: hint.hint_order,
+            });
+            // Success handled visually (e.g., flash green border)
+        } catch (e) {
+            console.error('Failed to update hint:', e.message);
+        }
+    }
+
+
+
 
     async function deleteHint(id) {
         if (!window.confirm('Delete this hint?')) return;
@@ -207,11 +235,12 @@ export default function GameAdminTab() {
                 question_header: question.question_header,
                 correct_answer: question.correct_answer,
             });
-            alert('Question saved');
+            flashSaved(question.id);
         } catch (e) {
-            alert('Failed to save question: ' + e.message);
+            console.error('Failed to save question:', e.message);
         }
     };
+
 
     const deleteQuestion = async (questionId) => {
         if (!window.confirm('Delete this question?')) return;
@@ -257,15 +286,18 @@ export default function GameAdminTab() {
     async function saveAnswer(questionId, answer) {
         const { id, ...rest } = answer;
         try {
+            let updated;
+            console.log('Saving answer', id, rest);
+
             if (id && typeof id === 'string' && id.startsWith('new')) {
-                const data = await adminAnswers.insert({ ...rest, question_id: questionId });
+                updated = await adminAnswers.insert({ ...rest, question_id: questionId });
                 setQuestions(prev =>
                     prev.map(q =>
                         q.id === questionId
                             ? {
                                 ...q,
                                 answers: q.answers.map(a =>
-                                    a.id === id ? data : a
+                                    a.id === id ? updated : a
                                 ),
                             }
                             : q
@@ -273,11 +305,25 @@ export default function GameAdminTab() {
                 );
             } else {
                 await adminAnswers.update(id, rest);
+                updated = answer;
             }
+
+            // Flash green border
+            setSavedAnswerIds(prev => new Set(prev).add(updated.id));
+            setTimeout(() => {
+                setSavedAnswerIds(prev => {
+                    const copy = new Set(prev);
+                    copy.delete(updated.id);
+                    return copy;
+                });
+            }, 1000);
+
         } catch (e) {
-            alert('Failed to save answer: ' + e.message);
+            console.error('Failed to save answer:', e.message);
         }
     }
+
+
 
     async function deleteAnswer(questionId, answerId) {
         if (!window.confirm('Delete this answer?')) return;
@@ -369,72 +415,84 @@ export default function GameAdminTab() {
             <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
             <div className="bg-gray-100 p-6 rounded-lg shadow-inner mt-12">
                 <h2 className="text-2xl font-semibold mb-4">Location Management</h2>
+
                 <AdminGameSelector
                     selectedGameId={selectedGameId}
                     setSelectedGameId={setSelectedGameId}
                 />
+
+                {!selectedGameId && (
+                    <p className="text-red-600 mt-4">Please select a game to begin managing locations, hints, and questions.</p>
+                )}
+
                 {selectedGameId && (
-                    <LocationEditor
-                        locations={locations}
-                        setLocations={setLocations}
-                        onDelete={handleDeleteLocation}
-                        onReorder={handleReorderLocations}
-                        updateLocationField={updateLocationField}
-                        onSetCoordinates={handleSetCoordinates}
-                        onAddLocation={handleAddLocation}
-                    />
+                    <>
+                        <LocationEditor
+                            locations={locations}
+                            setLocations={setLocations}
+                            onDelete={handleDeleteLocation}
+                            onReorder={handleReorderLocations}
+                            updateLocationField={updateLocationField}
+                            onSetCoordinates={handleSetCoordinates}
+                            onAddLocation={handleAddLocation}
+                        />
+
+                        <div className="mb-6 mt-10">
+                            <label htmlFor="location-select" className="block mb-2 font-semibold">
+                                Select Location which details are edited:
+                            </label>
+                            <select
+                                id="location-select"
+                                value={selectedLocationId || ''}
+                                onChange={(e) => setSelectedLocationId(e.target.value)}
+                                className="input-field"
+                            >
+                                {locations.map((loc) => (
+                                    <option key={loc.id} value={loc.id}>
+                                        {loc.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {Array.isArray(hints) && (
+                            <HintEditor
+                                hints={hints}
+                                locationName={selectedLocationName}
+                                updateHintText={updateHintText}
+                                saveHint={saveHint}
+                                deleteHint={deleteHint}
+                                addHint={addHint}
+                                onReorderHints={async (newList) => {
+                                    setHints(newList);
+                                    await Promise.all(
+                                        newList.map((hint, index) =>
+                                            adminHints.update(hint.id, { hint_order: index + 1 })
+                                        )
+                                    );
+                                }}
+                            />
+                        )}
+
+                        <QuestionEditor
+                            questions={questions}
+                            locationName={selectedLocationName}
+                            updateQuestionText={updateQuestionText}
+                            toggleCorrectAnswer={toggleCorrectAnswer}
+                            saveQuestion={saveQuestion}
+                            deleteQuestion={deleteQuestion}
+                            addQuestion={addQuestion}
+                            updateAnswerText={updateAnswerText}
+                            saveAnswer={saveAnswer}
+                            deleteAnswer={deleteAnswer}
+                            addAnswer={addAnswer}
+                            savedAnswerIds={savedAnswerIds}
+                        />
+
+                        <GameUserAssignment gameId={selectedGameId} />
+                    </>
                 )}
 
-                <div className="mb-6 mt-10">
-                    <label htmlFor="location-select" className="block mb-2 font-semibold">
-                        Select Location which details are edited:
-                    </label>
-                    <select
-                        id="location-select"
-                        value={selectedLocationId || ''}
-                        onChange={(e) => setSelectedLocationId(e.target.value)}
-                        className="input-field"
-                    >
-                        {locations.map((loc) => (
-                            <option key={loc.id} value={loc.id}>
-                                {loc.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                {Array.isArray(hints) && (
-                    <HintEditor
-                        hints={hints}
-                        locationName={selectedLocationName}
-                        updateHintText={updateHintText}
-                        saveHint={saveHint}
-                        deleteHint={deleteHint}
-                        addHint={addHint}
-                        onReorderHints={async (newList) => {
-                            setHints(newList);
-                            await Promise.all(
-                                newList.map((hint, index) =>
-                                    adminHints.update(hint.id, { hint_order: index + 1 })
-                                )
-                            );
-                        }}
-                    />
-                )}
-
-                <QuestionEditor
-                    questions={questions}
-                    locationName={selectedLocationName}
-                    updateQuestionText={updateQuestionText}
-                    toggleCorrectAnswer={toggleCorrectAnswer}
-                    saveQuestion={saveQuestion}
-                    deleteQuestion={deleteQuestion}
-                    addQuestion={addQuestion}
-                    updateAnswerText={updateAnswerText}
-                    saveAnswer={saveAnswer}
-                    deleteAnswer={deleteAnswer}
-                    addAnswer={addAnswer}
-                />
                 {locationToSetCoords && (
                     <MapCoordinatePicker
                         initialPosition={
@@ -447,11 +505,7 @@ export default function GameAdminTab() {
                     />
                 )}
             </div>
-
-            {selectedGameId && (
-                <GameUserAssignment gameId={selectedGameId} />
-            )}
-
         </div>
     );
+
 }

@@ -270,6 +270,7 @@ export const storage = {
     },
 
     getSignedUrl: async (filePath, expiresInSec = 60) => {
+        console.log("filePath: ", filePath);
         const { data, error } = await supabase.storage
             .from(bucketName)
             .createSignedUrl(filePath, expiresInSec);

@@ -7,6 +7,7 @@ import {
     gameAssignments
 } from '../../services/supabaseService';
 import { createImageWithThumbnail } from '../../utils/imageHandling';
+import { extractThumbnail } from '../../utils/thumbnailExtractor';
 
 export default function UserManager() {
     const [users, setUsers] = useState([]);
@@ -59,15 +60,26 @@ export default function UserManager() {
             const images = await adminImages.fetchByUserId(userId);
             const imagesWithUrls = await Promise.all(
                 images.map(async (img) => {
-                    const signedUrl = await storage.getSignedUrl(img.thumb_path, 300);
-                    return { ...img, signedUrl };
+                    const signedThumb = img.thumb_path
+                        ? await storage.getSignedUrl(img.thumb_path, 300)
+                        : null;
+
+                    const signedFull = await storage.getSignedUrl(img.file_path, 600);
+
+                    return {
+                        ...img,
+                        signedUrl: signedThumb, // for images
+                        fullUrl: signedFull,     // always used (e.g. for video or fallback)
+                    };
                 })
             );
+
             setUserImages(prev => ({ ...prev, [userId]: imagesWithUrls }));
         } catch (e) {
             alert('Failed to load images: ' + e.message);
         }
     };
+
 
     const handleFieldChange = async (userId, field, newValue) => {
         setUsers(prev =>
@@ -82,34 +94,53 @@ export default function UserManager() {
         }
     };
 
-    const handleImageUpload = async (userId, event) => {
+    const handleMediaUpload = async (userId, event) => {
+        console.log(event.target.files);
         const file = event.target.files[0];
         if (!file) return;
 
         const now = Date.now();
         const fileName = `${now}_${file.name}`;
-        const thumbFileName = `thumb_${fileName}`;
         const filePath = `${userId}/${fileName}`;
-        const thumbPath = `${userId}/${thumbFileName}`;
 
         try {
-            const { originalFile, thumbnailFile, fileType } = await createImageWithThumbnail(file);
-            await storage.uploadFile(filePath, originalFile);
-            await storage.uploadFile(thumbPath, thumbnailFile);
-            await adminImages.insert({
-                user_id: userId,
-                file_path: filePath,
-                file_name: fileName,
-                thumb_path: thumbPath,
-                is_profile_pic: false,
-                content_type: fileType,
-            });
+            const fileType = file.type;
+            console.log(fileType);
+
+            if (fileType.startsWith("image/")) {
+                // image logic (unchanged)
+                const { originalFile, thumbnailFile } = await createImageWithThumbnail(file);
+                await storage.uploadFile(filePath, originalFile);
+                await storage.uploadFile(`${userId}/thumb_${fileName}`, thumbnailFile);
+            } else if (fileType.startsWith("video/")) {
+                // upload video as-is, no thumbnail
+                const thumbnailFile = await extractThumbnail(file);
+                const thumbFileName = `thumb_${fileName}`;
+                const thumbPath = `${userId}/${thumbFileName}`;
+                await storage.uploadFile(filePath, file);
+                await storage.uploadFile(thumbPath, thumbnailFile);
+            } else {
+                alert("Unsupported file type.");
+                return;
+            }
+
+        await adminImages.insert({
+            user_id: userId,
+            file_path: filePath,
+            file_name: fileName,
+            thumb_path: `${userId}/thumb_${fileName}`,
+            is_profile_pic: false,
+            content_type: fileType,
+        });
+
+
             await loadUserImages(userId);
             event.target.value = null;
         } catch (e) {
-            alert('Failed to upload image: ' + e.message);
+            alert("Failed to upload media: " + e.message);
         }
     };
+
 
     const handleFolderUpload = async (userId, event) => {
         const files = Array.from(event.target.files);
@@ -298,16 +329,36 @@ export default function UserManager() {
                                                 </div>
                                             ))}
                                         </div>
-                                        <p>one file</p>
-                                        <input type="file" accept="image/*" onChange={(e) => handleImageUpload(user.id, e)} />
-                                        <p>directory</p>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            webkitdirectory="true"
-                                            onChange={(e) => handleFolderUpload(user.id, e)}
-                                        />
+                                        <div className="space-y-4 mt-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2">Upload a single image</label>
+                                                <label className="inline-block btn-pill-sm bg-slate-600 text-white cursor-pointer px-4 py-2">
+                                                    Choose File
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => handleMediaUpload(user.id, e)}
+                                                    />
+                                                </label>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold mb-2">Upload a folder of images</label>
+                                                <label className="inline-block btn-pill-sm bg-slate-600 text-white cursor-pointer px-4 py-2">
+                                                    Choose Folder
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        multiple
+                                                        webkitdirectory="true"
+                                                        className="hidden"
+                                                        onChange={(e) => handleFolderUpload(user.id, e)}
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+
                                         <div className="mt-2">
                                             <button
                                                 className="btn-pill-sm"
