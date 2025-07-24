@@ -108,34 +108,41 @@ export default function MapView() {
     }, [user, supabase, navigate, dispatch]);
 
     useEffect(() => {
-        console.log("Loading data for game:", selectedGameId);
-        if (!selectedGameId) return;
-        console.log("📍 Game ID became available:", selectedGameId);
         const fallback = { lat: 60.4522438, lng: 22.2680450 };
-
         let watchId;
 
         if (navigator.geolocation) {
             watchId = navigator.geolocation.watchPosition(
                 (pos) => {
+                    console.log("📍 Got position:", pos);
                     setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                 },
-                () => {
+                (err) => {
+                    console.warn("⚠️ Geolocation error:", err);
                     setLocation(fallback);
                 },
                 { enableHighAccuracy: true }
             );
         } else {
+            console.log("📵 Geolocation not available. Using fallback.");
             setLocation(fallback);
         }
 
-        console.log('gameId for game loading should be', selectedGameId);
+        return () => {
+            if (watchId !== undefined) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+        };
+    }, []); // 👈 only runs once on mount
+
+    useEffect(() => {
         if (!selectedGameId) return;
 
-        console.log("Fetching locations...");
-        fetchLocationsWithHintsQuestionsAnswers(selectedGameId).then(async (data) => {
+        console.log("📍 Game ID available:", selectedGameId);
+        console.log("📦 Fetching locations...");
+
+        fetchLocationsWithHintsQuestionsAnswers(selectedGameId).then((data) => {
             const sorted = data.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
-            console.log('sorted', sorted);
             const formatted = sorted.map(loc => ({
                 ...loc,
                 hints: loc.hints?.sort((a, b) => a.hint_order - b.hint_order) || [],
@@ -147,18 +154,13 @@ export default function MapView() {
             setLocations(formatted);
             setReady(true);
         });
-
-
-        return () => {
-            if (watchId !== undefined) {
-                navigator.geolocation.clearWatch(watchId);
-            }
-        };
     }, [selectedGameId]);
+
+
 
     useEffect(() => {
         const fallback = { lat: 60.4522438, lng: 22.2680450 };
-
+        console.log(fallback);
         let watchId;
 
         if (navigator.geolocation) {
@@ -414,18 +416,18 @@ export default function MapView() {
     if (availableGames.length > 1 && !selectedGameId) {
         return (
             <div className="p-4 bg-white text-center">
-                <h2 className="text-xl font-semibold mb-2">Select Game</h2>
+                <h2 className="text-6xl font-semibold mb-6">Select Game</h2>
                 <select
-                    className="input-field"
+                    className="w-full max-w-md mx-auto px-6 py-5 rounded-xl border border-gray-400 text-4xl leading-tight bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onChange={(e) => {
-                        console.log("🟢 setting selectedGameId:", e.target.value); // ✅ Add this
+                        console.log("🟢 setting selectedGameId:", e.target.value);
                         dispatch(setSelectedGameId(e.target.value));
                     }}
                     defaultValue=""
                 >
-                    <option value="" disabled>Select one...</option>
+                    <option value="" disabled className="text-4xl">Select one...</option>
                     {availableGames.map((g) => (
-                        <option key={g.game_id} value={g.game_id}>
+                        <option key={g.game_id} value={g.game_id} className="text-4xl">
                             {g.games?.name ?? `Game ${g.game_id}`}
                         </option>
                     ))}
@@ -435,10 +437,11 @@ export default function MapView() {
     }
 
 
+
     if (!ready) {
         return (
             <div className="flex items-center justify-center h-screen">
-                <p className="text-lg font-semibold text-gray-500">Loading game...</p>
+                <p className="font-semibold text-gray-500 text-6xl">Loading game...</p>
             </div>
         );
     }
@@ -452,8 +455,15 @@ export default function MapView() {
                 </h2>
             )}
 
-            {!showQuestion && (
-                location ? (
+            {!showQuestion && (() => {
+                console.log("📍 showQuestion:", showQuestion);
+                console.log("📍 location:", location);
+                console.log("📍 centerOnUser:", centerOnUser);
+                console.log("📍 guessed:", guessed);
+                console.log("📍 waiting:", waiting);
+                console.log("📍 currentLoc:", currentLoc);
+
+                return location ? (
                     <MapContainer center={[location.lat, location.lng]} zoom={15} style={{ height: "40vh" }}>
                         <TileLayer
                             url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
@@ -469,8 +479,11 @@ export default function MapView() {
                             />
                         )}
                     </MapContainer>
-                ) : <p>Getting location...</p>
-            )}
+                ) : (
+                    <p>Getting location...</p>
+                );
+            })()}
+
 
             <div className="mt-6 mx-auto space-y-4">
                 {!gameActive && !gameEnded && (
