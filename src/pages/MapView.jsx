@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import { useDispatch, useSelector } from 'react-redux';
+import { setAvailableGames, setSelectedGameId, setGameActive } from '../store/slices/gameSlice';
 import FinalMessage from './FinalMessage';
 import { logEvent } from '../utils/logger';
 import {
@@ -42,14 +44,19 @@ const redIcon = new L.Icon({
 export default function MapView() {
     const { user, profile, supabase } = useAuthContext();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const availableGames = useSelector(state => state.game.availableGames);
+    const selectedGameId = useSelector(state => state.game.selectedGameId);
+    const gameActive = useSelector(state => state.game.gameActive);
 
     const [location, setLocation] = useState(null);
     const [locations, setLocations] = useState([]);
     const [trainingMode, setTrainingMode] = useState(false);
     const [trainingStep, setTrainingStep] = useState(0);
     const [trainingComplete, setTrainingComplete] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    const [gameActive, setGameActive] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [hintIndex, setHintIndex] = useState(0);
     const [score, setScore] = useState(0);
@@ -63,6 +70,8 @@ export default function MapView() {
     const [isCorrect, setIsCorrect] = useState(null);
     const [buttonDisabled, setButtonDisabled] = useState(false);
     const [gameEnded, setGameEnded] = useState(false);
+    const [ready, setReady] = useState(false);
+
 
     const isAdmin = profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
@@ -74,6 +83,34 @@ export default function MapView() {
     ];
 
     useEffect(() => {
+        if (!user?.id) return;
+        console.log('user', user);
+
+        async function checkGameAccess() {
+            const { data, error } = await supabase
+                .from('game_players')
+                .select('game_id, games (name)')
+                .eq('user_id', user.id);
+
+            console.log('Selected gameId', data);
+            if (error || !data || data.length === 0) {
+                navigate('/sorry');
+                return;
+            }
+
+            dispatch(setAvailableGames(data));
+            if (data.length === 1) {
+                dispatch(setSelectedGameId(data[0].game_id));
+            }
+        }
+
+        checkGameAccess();
+    }, [user, supabase, navigate, dispatch]);
+
+    useEffect(() => {
+        console.log("Loading data for game:", selectedGameId);
+        if (!selectedGameId) return;
+        console.log("📍 Game ID became available:", selectedGameId);
         const fallback = { lat: 60.4522438, lng: 22.2680450 };
 
         let watchId;
@@ -92,8 +129,13 @@ export default function MapView() {
             setLocation(fallback);
         }
 
-        fetchLocationsWithHintsQuestionsAnswers().then(async (data) => {
+        console.log('gameId for game loading should be', selectedGameId);
+        if (!selectedGameId) return;
+
+        console.log("Fetching locations...");
+        fetchLocationsWithHintsQuestionsAnswers(selectedGameId).then(async (data) => {
             const sorted = data.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
+            console.log('sorted', sorted);
             const formatted = sorted.map(loc => ({
                 ...loc,
                 hints: loc.hints?.sort((a, b) => a.hint_order - b.hint_order) || [],
@@ -103,7 +145,7 @@ export default function MapView() {
                 })) || [],
             }));
             setLocations(formatted);
-
+            setReady(true);
         });
 
 
@@ -112,7 +154,37 @@ export default function MapView() {
                 navigator.geolocation.clearWatch(watchId);
             }
         };
+    }, [selectedGameId]);
+
+    useEffect(() => {
+        const fallback = { lat: 60.4522438, lng: 22.2680450 };
+
+        let watchId;
+
+        if (navigator.geolocation) {
+            watchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                },
+                (err) => {
+                    console.warn('Geolocation error:', err);
+                    setLocation(fallback);
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            setLocation(fallback);
+        }
+
+        return () => {
+            if (watchId !== undefined) {
+                navigator.geolocation.clearWatch(watchId);
+            }
+        };
     }, []);
+
+
+
 
     useEffect(() => {
         if (!waiting || !locations[currentIndex]) return;
@@ -138,10 +210,16 @@ export default function MapView() {
     }, [showQuestion]);
 
     useEffect(() => {
-        if (user?.id && locations.length > 0) {
-            getResumeState(user.id, locations);
+        if (user?.id && locations.length > 0 && selectedGameId) {
+            getResumeState(user.id, locations, selectedGameId);
         }
-    }, [user?.id, locations]);
+    }, [user?.id, locations, selectedGameId]);
+
+    useEffect(() => {
+        if (location && locations.length > 0) {
+            setReady(true);
+        }
+    }, [location, locations]);
 
     const getDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371e3;
@@ -161,10 +239,10 @@ export default function MapView() {
         alert("Training started!");
     };
 
-    const getResumeState = async (userId, locations) => {
+    const getResumeState = async (userId, locations, selectedGameId) => {
+        if (!userId || !locations || locations.length === 0 || !selectedGameId) return;
 
-        if (!userId || !locations || locations.length === 0) return;
-
+        // Step 1: Fetch all user progress
         const { data: progressData, error } = await supabase
             .from('user_progress')
             .select('*')
@@ -179,16 +257,26 @@ export default function MapView() {
             return;
         }
 
-        setGameActive(true);
+        // Step 2: Get location IDs that belong to the current game
+        const locationIdsForGame = locations.map(loc => loc.id);
 
-        // Sort locations by display_order or id
+        // Step 3: Filter progress entries to only include those in current game
+        const progressForGame = progressData.filter(p =>
+            locationIdsForGame.includes(p.location_id)
+        );
+
+        if (progressForGame.length === 0) return;
+
+        dispatch(setGameActive(true));
+
+
         const sorted = [...locations].sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
+
         for (let i = 0; i < sorted.length; i++) {
             const loc = sorted[i];
-            const progress = progressData.find(p => p.location_id === loc.id);
+            const progress = progressForGame.find(p => p.location_id === loc.id);
 
             if (!progress) {
-                // Not started yet, resume from here
                 setCurrentIndex(i);
                 setHintIndex(0);
                 setGuessed(false);
@@ -198,25 +286,20 @@ export default function MapView() {
             }
 
             if (progress.answered_correctly === null) {
-                // Guessed correctly, walking toward location
                 setCurrentIndex(i);
                 setGuessed(true);
                 setWaiting(true);
                 setShowQuestion(false);
                 return;
             }
-
-            if (progress.answered_correctly !== null) {
-                // Completed this one
-                continue;
-            }
         }
 
-        // All locations completed
         setGameEnded(true);
-        setGameActive(false);
+        dispatch(setGameActive(false));
+
         navigate('/game-complete');
     };
+
 
     const handleMapClick = (e) => {
         if (trainingMode) {
@@ -293,23 +376,21 @@ export default function MapView() {
         ? getDistance(location.lat, location.lng, currentLoc.latitude, currentLoc.longitude)
         : null;
 
-    const getGameStateSnapshot = () => {
-        return {
-            gameActive,
-            currentIndex,
-            hintIndex,
-            score,
-            guessed,
-            waiting,
-            showQuestion,
-            selectedAnswer,
-            quizComplete,
-            centerOnUser,
-            submitted,
-            isCorrect,
-            gameEnded,
-        };
-    };
+    const getGameStateSnapshot = () => ({
+        gameActive: useSelector(state => state.game.gameActive),
+        currentIndex,
+        hintIndex,
+        score,
+        guessed,
+        waiting,
+        showQuestion,
+        selectedAnswer,
+        quizComplete,
+        centerOnUser,
+        submitted,
+        isCorrect,
+        gameEnded,
+    });
 
     const handleGiveUp = async () => {
         const loc = locations[currentIndex];
@@ -330,9 +411,41 @@ export default function MapView() {
         logEvent(text, states);
     };
 
+    if (availableGames.length > 1 && !selectedGameId) {
+        return (
+            <div className="p-4 bg-white text-center">
+                <h2 className="text-xl font-semibold mb-2">Select Game</h2>
+                <select
+                    className="input-field"
+                    onChange={(e) => {
+                        console.log("🟢 setting selectedGameId:", e.target.value); // ✅ Add this
+                        dispatch(setSelectedGameId(e.target.value));
+                    }}
+                    defaultValue=""
+                >
+                    <option value="" disabled>Select one...</option>
+                    {availableGames.map((g) => (
+                        <option key={g.game_id} value={g.game_id}>
+                            {g.games?.name ?? `Game ${g.game_id}`}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        );
+    }
+
+
+    if (!ready) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p className="text-lg font-semibold text-gray-500">Loading game...</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-4 bg-white">
+
+        <div className="p-4 bg-white animate-fadeIn">
             {!gameActive && (
                 <h2>
                     Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
@@ -347,8 +460,7 @@ export default function MapView() {
                             attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'
                         />
                         <Marker position={[location.lat, location.lng]} />
-                        <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser}/>
-                        {/* ✅ Red marker when user runs out of hints */}
+                        <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser} />
                         <TrainingClickHandler />
                         {guessed && waiting && currentLoc && (
                             <Marker
@@ -362,18 +474,37 @@ export default function MapView() {
 
             <div className="mt-6 mx-auto space-y-4">
                 {!gameActive && !gameEnded && (
-                    <button
-                        className="btn-pill2"
-                        onClick={async () => {
-                            await clearUserProgress(user.id);
-                            setGameActive(true);
-                            setCurrentIndex(0);
-                            setHintIndex(0);
-                            setScore(0);
-                            setGuessed(false);
-                            setCenterOnUser(false);
-                        }}
-                    >Start Game</button>
+                    <>
+                        {locations.length > 0 && (
+                            <button
+                                className="btn-pill2"
+                                onClick={async () => {
+                                    await clearUserProgress(user.id, selectedGameId);
+                                    dispatch(setGameActive(true));
+                                    setCurrentIndex(0);
+                                    setHintIndex(0);
+                                    setScore(0);
+                                    setGuessed(false);
+                                    setCenterOnUser(false);
+                                }}
+                            >
+                                Start Game
+                            </button>
+                        )}
+                        <button
+                            className="btn-pill2"
+                            onClick={startTraining}
+                            disabled={trainingMode}
+                        >
+                            Exercise
+                        </button>
+                        <button
+                            className="btn-pill2"
+                            onClick={() => supabase.auth.signOut().then(() => navigate('/'))}
+                        >
+                            Log Out
+                        </button>
+                    </>
                 )}
 
                 {gameActive && !guessed && locations[currentIndex] && !showQuestion && (
@@ -422,7 +553,9 @@ export default function MapView() {
                         className="btn-pill2"
                         onClick={onNextLocation}
                         disabled={buttonDisabled}
-                    >Next Location</button>
+                    >
+                        Next Location
+                    </button>
                 )}
 
                 {quizComplete && currentIndex >= locations.length - 1 && !gameEnded && (
@@ -431,7 +564,7 @@ export default function MapView() {
                         <button
                             className="btn-pill2"
                             onClick={() => {
-                                setGameActive(false);
+                                sdispatch(setGameActive(false));
                                 setGameEnded(true);
                                 setCurrentIndex(0);
                                 setScore(0);
@@ -443,21 +576,10 @@ export default function MapView() {
                                 setIsCorrect(null);
                                 setQuizComplete(false);
                             }}
-                        >End Game</button>
-                    </div>
-                )}
-
-                {!gameActive && !gameEnded && (
-                    <>
-                        <button
-                            className="btn-pill2"
-                            onClick={startTraining}
-                            disabled={trainingMode}
-                        >Exercise</button>
-                        <button className="btn-pill2" onClick={() => supabase.auth.signOut().then(() => navigate('/'))}>
-                            Log Out
+                        >
+                            End Game
                         </button>
-                    </>
+                    </div>
                 )}
 
                 {trainingMode && (
@@ -465,31 +587,32 @@ export default function MapView() {
                 )}
 
                 {isAdmin && (
-                    <button onClick={() => navigate('/admin')} className="btn-pill2">
-                        Admin View
-                    </button>
-                )}
-                {isAdmin && (
-                <button onClick={() => navigate('/results')} className="btn-pill2">
-                    Results
-                </button>
-            )}
-                {isAdmin && locations[currentIndex] && (
-                    <button
-                        className="btn-pill2 mt-4"
-                        onClick={() => {
-                            const loc = locations[currentIndex];
-                            setLocation({ lat: loc.latitude, lng: loc.longitude });
-                            setGuessed(true);
-                            setWaiting(true);
-                            setShowQuestion(true);
-                            alert(`Admin: User location set to ${loc.name}`);
-                        }}
-                    >
-                        Beam me up, Scotty!
-                    </button>
+                    <>
+                        <button onClick={() => navigate('/admin')} className="btn-pill2">
+                            Admin View
+                        </button>
+                        <button onClick={() => navigate('/results')} className="btn-pill2">
+                            Results
+                        </button>
+                        {locations[currentIndex] && (
+                            <button
+                                className="btn-pill2 mt-4"
+                                onClick={() => {
+                                    const loc = locations[currentIndex];
+                                    setLocation({ lat: loc.latitude, lng: loc.longitude });
+                                    setGuessed(true);
+                                    setWaiting(true);
+                                    setShowQuestion(true);
+                                    alert(`Admin: User location set to ${loc.name}`);
+                                }}
+                            >
+                                Beam me up, Scotty!
+                            </button>
+                        )}
+                    </>
                 )}
             </div>
         </div>
     );
+
 }
