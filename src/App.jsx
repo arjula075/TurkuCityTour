@@ -9,15 +9,16 @@ import Register from './pages/Register';
 import AdminView from './pages/AdminView';
 import GameComplete from './pages/GameComplete';
 import Results from './pages/Results';
+import Sorry from './pages/Sorry';
 import '@fontsource/montserrat';
 
 // Admin route guard wrapper component
 function AdminRoute({ children }) {
-  const { profile } = useAuthContext();
-  if (!profile?.is_admin) {
-    return <Navigate to="/" replace />;
-  }
-  return children;
+    const { profile } = useAuthContext();
+    if (!profile?.is_admin) {
+        return <Navigate to="/" replace />;
+    }
+    return children;
 }
 
 // Routes definition
@@ -52,6 +53,9 @@ const router = createBrowserRouter(
             ),
         },
         {
+            path: "/sorry",
+            element: <Sorry />},
+        {
             path: '/results',
             element: (
                 <AdminRoute>
@@ -64,6 +68,7 @@ const router = createBrowserRouter(
             path: '*',
             element: <Navigate to="/" replace />,
         },
+
     ],
     {
         future: {
@@ -74,11 +79,11 @@ const router = createBrowserRouter(
 
 
 function App() {
-  return (
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
-  );
+    return (
+        <AuthProvider>
+            <RouterProvider router={router} />
+        </AuthProvider>
+    );
 }
 
 export default App;

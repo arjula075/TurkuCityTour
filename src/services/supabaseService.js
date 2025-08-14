@@ -81,6 +81,7 @@ export const adminAnswers = {
     ...adminTable('answers'),
 
     toggleCorrectAnswer: (answerId, currentStatus) => {
+        console.log("answerId: ", answerId, "currentStatus: ", currentStatus)
         return handle(
             supabase
                 .from('answers')
@@ -94,47 +95,59 @@ export const adminAnswers = {
 
 // Admin: Locations
 export const adminLocations = {
-    fetch: () =>
+    fetchByGame: (gameId) =>
         handle(
             supabase
                 .from('locations')
                 .select('*')
+                .eq('game_id', gameId)
                 .order('display_order', { ascending: true })
         ),
-    insert: (location) => handle(supabase.from('locations').insert([location]).select().single()),
-    update: (id, updates) => handle(supabase.from('locations').update(updates).eq('id', id)),
-    delete: (id) => handle(supabase.from('locations').delete().eq('id', id)),
+    insert: (location) =>
+        handle(
+            supabase
+                .from('locations')
+                .insert([location])
+                .select()
+                .single()
+        ),
+    update: (id, updates) =>
+        handle(supabase.from('locations').update(updates).eq('id', id)),
+    delete: (id) =>
+        handle(supabase.from('locations').delete().eq('id', id)),
 };
+
 
 // Admin: User Progress
 export const adminUserProgress = adminTable('user_progress');
 
-export const fetchLocationsWithHintsQuestionsAnswers = () =>
+export const fetchLocationsWithHintsQuestionsAnswers = (gameId) =>
     handle(
         supabase
             .from('locations')
             .select(`
-        id,
-        name,
-        latitude,
-        longitude,
-        display_order,
-        hints (
-          hint_text,
-          hint_order
-        ),
-        questions (
-          id,
-          question_header,
-          question_body,
-          correct_answer,
-          answers (
-            id,
-            answer_text,
-            is_correct
-          )
-        )
-      `)
+                id,
+                name,
+                latitude,
+                longitude,
+                display_order,
+                hints (
+                    hint_text,
+                    hint_order
+                ),
+                questions (
+                    id,
+                    question_header,
+                    question_body,
+                    correct_answer,
+                    answers (
+                        id,
+                        answer_text,
+                        is_correct
+                    )
+                )
+            `)
+            .eq('game_id', gameId) // ✅ filter by game
             .order('id', { ascending: true })
     );
 
@@ -165,7 +178,7 @@ export async function updateUserProgress(userId, locationId, hintsUsed) {
     }
 }
 
-export async function clearUserProgress(user_id) {
+export async function clearAllUserProgress(user_id) {
     const { error } = await supabase
         .from('user_progress')
         .delete()
@@ -174,7 +187,33 @@ export async function clearUserProgress(user_id) {
     if (error) {
         throw error;
     }
-}
+};
+
+export const clearUserProgress = async (userId, gameId) => {
+    // Step 1: Fetch location IDs for the current game
+    const { data: locations, error: locErr } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('game_id', gameId);
+
+    if (locErr || !locations) {
+        console.error('Error fetching locations for game:', locErr);
+        return;
+    }
+
+    const locationIds = locations.map(loc => loc.id);
+
+    // Step 2: Delete progress only for those location IDs
+    const { error: deleteError } = await supabase
+        .from('user_progress')
+        .delete()
+        .eq('user_id', userId)
+        .in('location_id', locationIds);
+
+    if (deleteError) {
+        console.error('Error clearing progress for game:', deleteError);
+    }
+};
 
 export async function markQuestionAsAnsweredCorrectly(userId, locationId, isCorrect) {
     const { error } = await supabase
@@ -231,6 +270,7 @@ export const storage = {
     },
 
     getSignedUrl: async (filePath, expiresInSec = 60) => {
+        console.log("filePath: ", filePath);
         const { data, error } = await supabase.storage
             .from(bucketName)
             .createSignedUrl(filePath, expiresInSec);
@@ -274,3 +314,49 @@ export async function fetchCorrectAnswerResults() {
 export async function fetchTotalPointsResults() {
     return handle(supabase.from('calculate_user_points').select('*'));
 }
+
+export const adminGames = {
+    fetch: () => handle(supabase.from('games').select('*').order('created_at', { ascending: true })),
+    insert: (game) => handle(supabase.from('games').insert([game]).select().single()),
+    update: (id, updates) => handle(supabase.from('games').update(updates).eq('id', id).select().single()),
+    delete: (id) => handle(supabase.from('games').delete().eq('id', id)),
+};
+
+export const gameAssignments = {
+    fetchByGame: async (gameId) => {
+        const { data, error } = await supabase
+            .from('game_players')
+            .select('user_id')
+            .eq('game_id', gameId);
+        if (error) throw error;
+        return data.map(row => row.user_id);
+    },
+    assign: async (userId, gameId) => {
+        const { error } = await supabase
+            .from('game_players')
+            .insert({ user_id: userId, game_id: gameId });
+        if (error) throw error;
+    },
+    unassign: async (userId, gameId) => {
+        const { error } = await supabase
+            .from('game_players')
+            .delete()
+            .eq('user_id', userId)
+            .eq('game_id', gameId);
+        if (error) throw error;
+    },
+    fetchGames: async () => {
+        const { data, error } = await supabase.from('games').select('*').order('created_at');
+        if (error) throw error;
+        return data;
+    },
+    fetchByUser: async (userId) => {
+        const { data, error } = await supabase
+            .from('game_players')
+            .select('game_id')
+            .eq('user_id', userId);
+        if (error) throw error;
+        return data.map(row => row.game_id);
+    },
+};
+
