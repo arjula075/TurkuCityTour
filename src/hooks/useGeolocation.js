@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-const TURKU_FALLBACK = { lat: 60.4522438, lng: 22.2680450 };
+import { TURKU_FALLBACK } from '../utils/geo';
 
 const WATCH_OPTIONS = {
     enableHighAccuracy: true,
@@ -64,7 +64,7 @@ export default function useGeolocation({ pollWhileActive = false } = {}) {
         }
 
         return () => {
-            navigator.geolocation.clearWatch(watchId);
+            navigator.geolocation?.clearWatch(watchId);
             if (pollId) window.clearInterval(pollId);
         };
     }, [pollWhileActive]);
