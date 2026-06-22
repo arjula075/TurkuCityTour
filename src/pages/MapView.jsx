@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
@@ -21,6 +21,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import HintDisplay from '../components/mapview/HintDisplay';
 import QuestionDisplay from '../components/mapview/QuestionDisplay';
 import TrainingPrompt from '../components/mapview/TrainingPrompt';
+import useGeolocation from '../hooks/useGeolocation';
 
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
@@ -50,7 +51,6 @@ export default function MapView() {
     const selectedGameId = useSelector(state => state.game.selectedGameId);
     const gameActive = useSelector(state => state.game.gameActive);
 
-    const [location, setLocation] = useState(null);
     const [locations, setLocations] = useState([]);
     const [trainingMode, setTrainingMode] = useState(false);
     const [trainingStep, setTrainingStep] = useState(0);
@@ -72,6 +72,10 @@ export default function MapView() {
     const [gameEnded, setGameEnded] = useState(false);
     const [ready, setReady] = useState(false);
 
+    const needsLiveLocation = gameActive || waiting || trainingMode;
+    const { location: gpsLocation } = useGeolocation({ pollWhileActive: needsLiveLocation });
+    const [manualLocation, setManualLocation] = useState(null);
+    const location = manualLocation ?? gpsLocation;
 
     const isAdmin = profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
@@ -108,34 +112,6 @@ export default function MapView() {
     }, [user, supabase, navigate, dispatch]);
 
     useEffect(() => {
-        const fallback = { lat: 60.4522438, lng: 22.2680450 };
-        let watchId;
-
-        if (navigator.geolocation) {
-            watchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    console.log("📍 Got position:", pos);
-                    setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                },
-                (err) => {
-                    console.warn("⚠️ Geolocation error:", err);
-                    setLocation(fallback);
-                },
-                { enableHighAccuracy: true }
-            );
-        } else {
-            console.log("📵 Geolocation not available. Using fallback.");
-            setLocation(fallback);
-        }
-
-        return () => {
-            if (watchId !== undefined) {
-                navigator.geolocation.clearWatch(watchId);
-            }
-        };
-    }, []); // 👈 only runs once on mount
-
-    useEffect(() => {
         if (!selectedGameId) return;
 
         console.log("📍 Game ID available:", selectedGameId);
@@ -156,54 +132,20 @@ export default function MapView() {
         });
     }, [selectedGameId]);
 
-
-
     useEffect(() => {
-        const fallback = { lat: 60.4522438, lng: 22.2680450 };
-        console.log(fallback);
-        let watchId;
+        if (!waiting || !locations[currentIndex] || !location) return;
 
-        if (navigator.geolocation) {
-            watchId = navigator.geolocation.watchPosition(
-                (pos) => {
-                    setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                },
-                (err) => {
-                    console.warn('Geolocation error:', err);
-                    setLocation(fallback);
-                },
-                { enableHighAccuracy: true }
-            );
-        } else {
-            setLocation(fallback);
-        }
-
-        return () => {
-            if (watchId !== undefined) {
-                navigator.geolocation.clearWatch(watchId);
-            }
-        };
-    }, []);
-
-
-
-
-    useEffect(() => {
-        if (!waiting || !locations[currentIndex]) return;
-        const id = navigator.geolocation.watchPosition(
-            (pos) => {
-                const dist = getDistance(pos.coords.latitude, pos.coords.longitude, locations[currentIndex].latitude, locations[currentIndex].longitude);
-                if (dist <= 50) {
-                    navigator.geolocation.clearWatch(id);
-                    setShowQuestion(true);
-                }
-            },
-            () => {},
-            { enableHighAccuracy: true }
+        const dist = getDistance(
+            location.lat,
+            location.lng,
+            locations[currentIndex].latitude,
+            locations[currentIndex].longitude
         );
 
-        return () => navigator.geolocation.clearWatch(id);
-    }, [waiting, locations, currentIndex]);
+        if (dist <= 50) {
+            setShowQuestion(true);
+        }
+    }, [waiting, locations, currentIndex, location]);
 
     useEffect(() => {
         if (showQuestion) {
@@ -336,12 +278,22 @@ export default function MapView() {
         return null;
     };
 
+    function UserLocationMarker({ lat, lng }) {
+        const markerRef = useRef(null);
+
+        useEffect(() => {
+            markerRef.current?.setLatLng([lat, lng]);
+        }, [lat, lng]);
+
+        return <Marker ref={markerRef} position={[lat, lng]} />;
+    }
+
     function RecenterMap({ lat, lng, centerOnUser }) {
         const map = useMap();
 
         useEffect(() => {
             if (centerOnUser && lat && lng) {
-                map.setView([lat, lng], map.getZoom());
+                map.panTo([lat, lng], { animate: true, duration: 0.5 });
             }
         }, [lat, lng, centerOnUser, map]);
 
@@ -469,7 +421,7 @@ export default function MapView() {
                             url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
                             attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'
                         />
-                        <Marker position={[location.lat, location.lng]} />
+                        <UserLocationMarker lat={location.lat} lng={location.lng} />
                         <RecenterMap lat={location.lat} lng={location.lng} centerOnUser={centerOnUser} />
                         <TrainingClickHandler />
                         {guessed && waiting && currentLoc && (
@@ -577,7 +529,7 @@ export default function MapView() {
                         <button
                             className="btn-pill2"
                             onClick={() => {
-                                sdispatch(setGameActive(false));
+                                dispatch(setGameActive(false));
                                 setGameEnded(true);
                                 setCurrentIndex(0);
                                 setScore(0);
@@ -612,7 +564,7 @@ export default function MapView() {
                                 className="btn-pill2 mt-4"
                                 onClick={() => {
                                     const loc = locations[currentIndex];
-                                    setLocation({ lat: loc.latitude, lng: loc.longitude });
+                                    setManualLocation({ lat: loc.latitude, lng: loc.longitude });
                                     setGuessed(true);
                                     setWaiting(true);
                                     setShowQuestion(true);
