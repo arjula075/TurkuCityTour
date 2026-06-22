@@ -1,0 +1,51 @@
+# Keeps the Supabase free-tier project active by issuing a lightweight DB read
+# at least once every 7 days. Supabase pauses projects after 7 days of inactivity.
+#
+# Required GitHub repository secrets:
+#   SUPABASE_URL                  e.g. https://cnjxceqnkjilekftfjpj.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY     from Supabase Dashboard → Settings → API
+#
+# Optional: run manually from Actions → "Supabase keep-alive" → Run workflow
+
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Mon & Thu at 12:00 UTC — safely under the 7-day inactivity window
+    - cron: '0 12 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "::error::Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY repository secrets."
+            exit 1
+          fi
+
+          response="$(curl -sS -w '\n%{http_code}' \
+            "${SUPABASE_URL}/rest/v1/games?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}")"
+
+          body="${response%$'\n'*}"
+          status="${response##*$'\n'}"
+
+          echo "HTTP ${status}"
+          echo "Response: ${body}"
+
+          if [ "${status}" -lt 200 ] || [ "${status}" -ge 300 ]; then
+            echo "::error::Keep-alive ping failed with HTTP ${status}"
+            exit 1
+          fi
+
+          echo "Supabase keep-alive succeeded."
