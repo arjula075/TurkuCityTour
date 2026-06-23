@@ -1,20 +1,13 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vitest/config';
 
-export default defineConfig(() => {
-    const env = loadEnv('test', process.cwd(), '');
-
-    return {
-        define: {
-            'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL ?? ''),
-            'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
-                env.VITE_SUPABASE_ANON_KEY ?? ''
-            ),
-        },
-        test: {
-            globals: true,
-            environment: 'node',
-            include: ['test/integration/**/*.test.js'],
-            testTimeout: 30_000,
-        },
-    };
+export default defineConfig({
+    test: {
+        globals: true,
+        environment: 'node',
+        include: ['test/integration/**/*.test.js'],
+        exclude: ['test/integration/helpers/**'],
+        testTimeout: 60_000,
+        hookTimeout: 60_000,
+        fileParallelism: false,
+    },
 });

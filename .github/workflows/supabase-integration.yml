@@ -1,0 +1,36 @@
+name: Supabase integration
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Nightly at 03:15 UTC — keeps RLS regression signal without blocking PR CI
+    - cron: '15 3 * * *'
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Supabase integration tests
+        env:
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+          SUPABASE_TEST_USER_EMAIL: ${{ secrets.SUPABASE_TEST_USER_EMAIL }}
+          SUPABASE_TEST_USER_PASSWORD: ${{ secrets.SUPABASE_TEST_USER_PASSWORD }}
+          SUPABASE_TEST_ADMIN_EMAIL: ${{ secrets.SUPABASE_TEST_ADMIN_EMAIL }}
+          SUPABASE_TEST_ADMIN_PASSWORD: ${{ secrets.SUPABASE_TEST_ADMIN_PASSWORD }}
+        run: npm run test:integration

@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticatedPlayer } from '../src/test-utils/e2eSupabaseMock.js';
+
 const supabaseUrl = process.env.PLAYWRIGHT_SUPABASE_URL || 'http://127.0.0.1:54321';
 
 test.describe('Map mobile smoke', () => {
     test.beforeEach(async ({ page }) => {
-        const { mockAuthenticatedPlayer } = await import('../src/test-utils/e2eSupabaseMock.js');
         await mockAuthenticatedPlayer(page, supabaseUrl);
     });
 

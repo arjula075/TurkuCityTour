@@ -38,6 +38,12 @@ export default defineConfig(({ mode }) => {
                     'src/main.jsx',
                     'src/test-utils/**',
                 ],
+                thresholds: {
+                    lines: 29,
+                    statements: 29,
+                    functions: 27,
+                    branches: 25,
+                },
             },
         },
     };
