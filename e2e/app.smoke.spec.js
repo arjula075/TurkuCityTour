@@ -26,9 +26,9 @@ test.describe('TurkuCityTour smoke', () => {
         await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     });
 
-    test('shows loading state on map without a session', async ({ page }) => {
+    test('redirects unauthenticated users away from map', async ({ page }) => {
         await page.goto('/map');
 
-        await expect(page.getByText('Loading game...')).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     });
 });
