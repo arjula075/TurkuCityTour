@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticatedPlayer } from '../src/test-utils/e2eSupabaseMock.js';
+import { mockAuthenticatedPlayer } from './helpers/e2eSupabaseMock.js';
 
 const supabaseUrl = process.env.PLAYWRIGHT_SUPABASE_URL || 'http://127.0.0.1:54321';
 

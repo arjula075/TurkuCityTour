@@ -14,17 +14,23 @@ export function makeSupabaseTableMock(result = { data: [], error: null }) {
         delete: vi.fn(function del() {
             return chain;
         }),
+        upsert: vi.fn(function upsert() {
+            return chain;
+        }),
         eq: vi.fn(function eq() {
-            return Promise.resolve(result);
+            return chain;
         }),
         in: vi.fn(function inFilter() {
-            return Promise.resolve(result);
+            return chain;
         }),
         order: vi.fn(function order() {
-            return Promise.resolve(result);
+            return chain;
         }),
         maybeSingle: vi.fn().mockResolvedValue(result),
         single: vi.fn().mockResolvedValue(result),
+        then(onFulfilled, onRejected) {
+            return Promise.resolve(result).then(onFulfilled, onRejected);
+        },
     };
 
     return chain;
@@ -37,4 +43,23 @@ export function makeSupabaseFromMock(tableHandlers = {}) {
         }
         return makeSupabaseTableMock();
     });
+}
+
+export function makeHoistedTableMock() {
+    const table = {
+        insert: vi.fn(() => table),
+        update: vi.fn(() => table),
+        delete: vi.fn(() => table),
+        select: vi.fn(() => table),
+        upsert: vi.fn(() => table),
+        eq: vi.fn(() => table),
+        in: vi.fn(() => table),
+        order: vi.fn(() => table),
+        single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        then(onFulfilled, onRejected) {
+            return Promise.resolve({ data: null, error: null }).then(onFulfilled, onRejected);
+        },
+    };
+    return table;
 }

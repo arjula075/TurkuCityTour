@@ -29,9 +29,9 @@ CI enforces minimum coverage (ratchet upward over time):
 
 | Metric | Current gate | Next target |
 |--------|--------------|-------------|
-| Lines / statements | 29% | 40% |
-| Functions | 27% | 40% |
-| Branches | 25% | 30% |
+| Lines / statements | 40% | 60% |
+| Functions | 40% | 50% |
+| Branches | 30% | 50% |
 
 ### Supabase integration tests (local or nightly CI)
 
@@ -55,6 +55,8 @@ Tests seed and clean up their own fixture data (games, locations, questions, ans
 
 ### Playwright E2E
 
+Pinned to `@playwright/test@1.60.0` — Playwright 1.61.0 breaks local ESM imports on Node 22.15+ ([issue #41311](https://github.com/microsoft/playwright/issues/41311)). CI uses Node 20.
+
 ```bash
 npx playwright install chromium   # first time only
 npm run test:e2e
@@ -74,3 +76,28 @@ E2E_TEST_USER_EMAIL=you@example.com E2E_TEST_USER_PASSWORD=secret npm run test:e
 | `security.yml` | PR / push to `First-release` | npm audit, secret scan, unit tests |
 | `supabase-integration.yml` | Nightly + manual | Live Supabase RLS regression |
 | `supabase-keepalive.yml` | Mon/Thu cron | Keeps free-tier project active |
+
+## GitHub secrets (optional workflows)
+
+Add these under **Settings → Secrets and variables → Actions** in the GitHub repo.
+
+### Nightly Supabase RLS (`supabase-integration.yml`)
+
+| Secret | Description |
+|--------|-------------|
+| `SUPABASE_TEST_URL` | Project URL |
+| `SUPABASE_TEST_ANON_KEY` | Anon key |
+| `SUPABASE_TEST_SERVICE_ROLE_KEY` | Service role key |
+| `SUPABASE_TEST_USER_EMAIL` | Test player account |
+| `SUPABASE_TEST_USER_PASSWORD` | Test player password |
+| `SUPABASE_TEST_ADMIN_EMAIL` | Admin account |
+| `SUPABASE_TEST_ADMIN_PASSWORD` | Admin password |
+
+### Gated full-game E2E (`e2e/full-game.spec.js`)
+
+| Secret | Description |
+|--------|-------------|
+| `E2E_TEST_USER_EMAIL` | Login email for live walkthrough |
+| `E2E_TEST_USER_PASSWORD` | Login password |
+
+The full-game spec is excluded from default CI; set these secrets and run `npm run test:e2e` locally or add a dedicated workflow when ready.

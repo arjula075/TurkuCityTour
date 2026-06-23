@@ -6,7 +6,8 @@ const supabaseUrl = process.env.PLAYWRIGHT_SUPABASE_URL || 'http://127.0.0.1:543
 
 export default defineConfig({
     testDir: './e2e',
-    testMatch: /.*\.spec\.js/,
+    testMatch: /.*\.spec\.js$/,
+    testIgnore: '**/helpers/**',
     timeout: 30_000,
     expect: {
         timeout: 10_000,
@@ -35,10 +36,7 @@ export default defineConfig({
         {
             name: 'chromium',
             testIgnore: /map\.mobile\.spec\.js|full-game\.spec\.js/,
-            use: {
-                ...devices['Desktop Chrome'],
-                ...(process.env.CI ? {} : { channel: 'chrome' }),
-            },
+            use: { ...devices['Desktop Chrome'] },
         },
         {
             name: 'mobile-chrome',
