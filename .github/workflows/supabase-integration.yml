@@ -1,13 +1,25 @@
 name: Supabase integration
 
 on:
+  pull_request:
+    branches: [First-release]
+  push:
+    branches: [First-release]
   workflow_dispatch:
   schedule:
-    # Nightly at 03:15 UTC — keeps RLS regression signal without blocking PR CI
+    # Nightly at 03:15 UTC — RLS regression when PR secrets are not configured
     - cron: '15 3 * * *'
+
+concurrency:
+  group: turkucitytour-supabase-integration-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   integration:
+    # Fork PRs never receive repository secrets; skip to avoid a no-op job.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -24,7 +36,50 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Detect Supabase integration credentials
+        id: creds
+        env:
+          SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
+          SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}
+          SUPABASE_TEST_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_TEST_SERVICE_ROLE_KEY }}
+          SUPABASE_TEST_USER_EMAIL: ${{ secrets.SUPABASE_TEST_USER_EMAIL }}
+          SUPABASE_TEST_USER_PASSWORD: ${{ secrets.SUPABASE_TEST_USER_PASSWORD }}
+          SUPABASE_TEST_ADMIN_EMAIL: ${{ secrets.SUPABASE_TEST_ADMIN_EMAIL }}
+          SUPABASE_TEST_ADMIN_PASSWORD: ${{ secrets.SUPABASE_TEST_ADMIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          vars=(
+            SUPABASE_TEST_URL
+            SUPABASE_TEST_ANON_KEY
+            SUPABASE_TEST_SERVICE_ROLE_KEY
+            SUPABASE_TEST_USER_EMAIL
+            SUPABASE_TEST_USER_PASSWORD
+            SUPABASE_TEST_ADMIN_EMAIL
+            SUPABASE_TEST_ADMIN_PASSWORD
+          )
+
+          if [ -z "${SUPABASE_TEST_URL:-}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Supabase integration secrets not configured; skipping tests."
+            exit 0
+          fi
+
+          missing=()
+          for var in "${vars[@]}"; do
+            if [ -z "${!var:-}" ]; then
+              missing+=("$var")
+            fi
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::SUPABASE_TEST_URL is set but these secrets are missing: ${missing[*]}"
+            exit 1
+          fi
+
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
       - name: Run Supabase integration tests
+        if: steps.creds.outputs.configured == 'true'
         env:
           SUPABASE_TEST_URL: ${{ secrets.SUPABASE_TEST_URL }}
           SUPABASE_TEST_ANON_KEY: ${{ secrets.SUPABASE_TEST_ANON_KEY }}

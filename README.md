@@ -35,11 +35,11 @@ CI enforces minimum coverage (ratchet upward over time):
 | Functions | 40% | 50% |
 | Branches | 30% | 50% |
 
-### Supabase integration tests (local or nightly CI)
+### Supabase integration tests (local or CI)
 
-Integration tests are **not** part of default PR CI. They run locally and in the scheduled `supabase-integration` workflow.
+Integration tests run locally and in `supabase-integration.yml`. On PRs and pushes to `First-release`, they run **only when all `SUPABASE_TEST_*` GitHub secrets are configured**; otherwise the workflow skips them without failing. Fork PRs never receive secrets and skip the job entirely.
 
-Required environment variables (in `.env.test` locally, or GitHub secrets for nightly).
+Required environment variables (in `.env.test` locally, or GitHub Actions secrets for CI).
 
 Set `SUPABASE_TEST_URL` to opt in; other values fall back to `VITE_*` from `.env.test`:
 
@@ -76,14 +76,14 @@ E2E_TEST_USER_EMAIL=you@example.com E2E_TEST_USER_PASSWORD=secret npm run test:e
 |----------|---------|---------|
 | `ci.yml` | PR / push to `First-release` | Unit tests, coverage, build, Playwright smoke |
 | `security.yml` | PR / push to `First-release` | npm audit, secret scan, unit tests |
-| `supabase-integration.yml` | Nightly + manual | Live Supabase RLS regression |
+| `supabase-integration.yml` | PR / push `First-release` (when secrets set), nightly, manual | Live Supabase RLS regression |
 | `supabase-keepalive.yml` | Mon/Thu cron | Keeps free-tier project active |
 
 ## GitHub secrets (optional workflows)
 
 Add these under **Settings → Secrets and variables → Actions** in the GitHub repo.
 
-### Nightly Supabase RLS (`supabase-integration.yml`)
+### Supabase RLS (`supabase-integration.yml`)
 
 | Secret | Description |
 |--------|-------------|

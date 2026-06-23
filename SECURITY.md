@@ -35,7 +35,7 @@ Players and admins authenticate via Supabase Auth. Game content and progress are
 
 - `/map` requires auth (enforced in `App.jsx` `AuthRoute`).
 - Open self-registration — configure in Supabase Auth if invite-only is desired.
-- RLS tests not on every PR — nightly `supabase-integration.yml`.
+- RLS tests on PR when `SUPABASE_TEST_*` GitHub secrets are configured (`supabase-integration.yml`); nightly schedule as fallback.
 - No CSP headers — configure at host (Netlify/Vercel/nginx).
 
 ## Remediation phases
@@ -45,7 +45,7 @@ Players and admins authenticate via Supabase Auth. Game content and progress are
 | 0 | Version DB policies in `supabase/migrations/` | In progress |
 | 1 | Server-authoritative answers (`submit_answer` RPC) | SQL + client ready; **apply SQL in Supabase** |
 | 2 | Auth routes, admin RLS, leaderboard views | Partial (`AuthRoute`, DEV-only admin GPS) |
-| 3 | CSP, PR integration tests, `.env.example`, dep cleanup | Partial |
+| 3 | CSP, PR integration tests, `.env.example`, dep cleanup | Partial (PR integration wired) |
 
 See the [security plan canvas](/Users/ari.lahti/.cursor/projects/empty-window/canvases/turkucitytour-security-plan.canvas.tsx) for the full audit.
 
