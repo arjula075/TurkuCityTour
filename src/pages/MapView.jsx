@@ -10,6 +10,7 @@ import {
     fetchLocationsForPlayer,
     updateUserProgress,
     clearUserProgress,
+    validateLocationArrival,
 } from '../services/supabaseService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -135,16 +136,38 @@ export default function MapView() {
     useEffect(() => {
         if (!waiting || !locations[currentIndex] || !location) return;
 
-        const dist = getDistance(
-            location.lat,
-            location.lng,
-            locations[currentIndex].latitude,
-            locations[currentIndex].longitude
-        );
+        let cancelled = false;
 
-        if (dist <= 50) {
-            setShowQuestion(true);
+        async function checkArrival() {
+            const loc = locations[currentIndex];
+            try {
+                const result = await validateLocationArrival(
+                    loc.id,
+                    location.lat,
+                    location.lng,
+                    50
+                );
+                if (!cancelled && result?.arrived) {
+                    setShowQuestion(true);
+                }
+            } catch (err) {
+                const dist = getDistance(
+                    location.lat,
+                    location.lng,
+                    loc.latitude,
+                    loc.longitude
+                );
+                if (!cancelled && dist <= 50) {
+                    setShowQuestion(true);
+                }
+            }
         }
+
+        checkArrival();
+
+        return () => {
+            cancelled = true;
+        };
     }, [waiting, locations, currentIndex, location]);
 
     useEffect(() => {

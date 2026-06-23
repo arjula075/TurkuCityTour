@@ -1,19 +1,6 @@
 import { supabase } from '../services/supabaseClient';
 
-// Cache IP so we don't fetch repeatedly
-let cachedIp = null;
-async function getClientIp() {
-    if (cachedIp) return cachedIp;
-    try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        cachedIp = data.ip;
-        return cachedIp;
-    } catch (err) {
-        console.error('Failed to fetch IP:', err);
-        return null;
-    }
-}
+const MAX_MESSAGE_LENGTH = 500;
 
 function getCallerInfo(depth = 2) {
     const err = new Error();
@@ -21,7 +8,7 @@ function getCallerInfo(depth = 2) {
 
     if (stack.length > depth) {
         const line = stack[depth].trim();
-        const match = line.match(/(?:\()?(.*):(\d+):(\d+)\)?$/); // file:line:column
+        const match = line.match(/(?:\()?(.*):(\d+):(\d+)\)?$/);
         if (match) {
             const [, file, lineNum] = match;
             return {
@@ -48,10 +35,8 @@ const stateToDbColumnMap = {
     isCorrect: "is_correct",
     buttonDisabled: "button_disabled",
     gameEnded: "game_ended",
-    // add more mappings as needed
 };
 
-// Map React game state keys to DB column names
 function mapGameStateToDbFields(gameState) {
     const mapped = {};
     for (const [key, value] of Object.entries(gameState)) {
@@ -62,11 +47,11 @@ function mapGameStateToDbFields(gameState) {
     return mapped;
 }
 
-function createPayload({ userId, ip_address, file, line, message, gameState }) {
+function createPayload({ userId, file, line, message, gameState }) {
     return {
         created_at: new Date().toISOString(),
         user_id: userId ?? null,
-        client_ip: ip_address,
+        client_ip: null,
         file_name: file,
         line_number: line,
         message,
@@ -77,7 +62,7 @@ function createPayload({ userId, ip_address, file, line, message, gameState }) {
 export async function logEvent(message, gameState = {}, callerDepth = 4) {
     try {
         const { file, line } = getCallerInfo(callerDepth);
-        const ip_address = await getClientIp();
+        const trimmedMessage = String(message ?? '').slice(0, MAX_MESSAGE_LENGTH);
 
         const { data: userData, error: userError } = await supabase.auth.getUser();
         if (userError) {
@@ -85,12 +70,15 @@ export async function logEvent(message, gameState = {}, callerDepth = 4) {
         }
         const userId = userData?.user?.id ?? null;
 
+        if (!userId) {
+            return;
+        }
+
         const payload = createPayload({
             userId,
-            ip_address,
             file,
             line,
-            message,
+            message: trimmedMessage,
             gameState,
         });
 

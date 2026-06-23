@@ -34,6 +34,7 @@ vi.mock('../services/supabaseService', () => ({
     fetchLocationsForPlayer: vi.fn(),
     updateUserProgress: vi.fn().mockResolvedValue(undefined),
     clearUserProgress: vi.fn().mockResolvedValue(undefined),
+    validateLocationArrival: vi.fn().mockResolvedValue({ arrived: false }),
 }));
 
 vi.mock('react-leaflet', () => ({
@@ -66,6 +67,7 @@ vi.mock('leaflet/dist/images/marker-shadow.png', () => ({ default: '' }));
 import {
     fetchLocationsForPlayer,
     updateUserProgress,
+    validateLocationArrival,
 } from '../services/supabaseService';
 
 function buildAuthValue(userProgress = []) {
@@ -185,6 +187,8 @@ describe('MapView', () => {
     });
 
     it('shows the question when the player arrives within 50 meters', async () => {
+        validateLocationArrival.mockResolvedValue({ arrived: true, distance_m: 5 });
+
         geolocationState.current = {
             location: { lat: 60.45, lng: 22.26 },
             error: null,

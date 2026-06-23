@@ -28,6 +28,23 @@ export async function submitAnswer(questionId, answerId) {
     return data;
 }
 
+export async function validateLocationArrival(
+    locationId,
+    latitude,
+    longitude,
+    toleranceMeters = 50
+) {
+    const data = await handle(
+        supabase.rpc('validate_location_arrival', {
+            p_location_id: locationId,
+            p_latitude: latitude,
+            p_longitude: longitude,
+            p_tolerance_meters: toleranceMeters,
+        })
+    );
+    return data;
+}
+
 export const fetchQuestionsAndAnswers = async (locationId) => {
     const questions = await handle(
         supabase.from('questions').select('*').eq('location_id', locationId)
@@ -246,19 +263,6 @@ export const clearUserProgress = async (userId, gameId) => {
         console.error('Error clearing progress for game:', deleteError);
     }
 };
-
-export async function markQuestionAsAnsweredCorrectly(userId, locationId, isCorrect) {
-    const { error } = await supabase
-        .from('user_progress')
-        .update({ answered_correctly: isCorrect })
-        .eq('user_id', userId)
-        .eq('location_id', locationId);
-
-    if (error) {
-        console.error("Failed to mark question as answered correctly:", error.message);
-        throw error;
-    }
-}
 
 export async function fetchUserProfile(userId) {
     const { data, error } = await supabase

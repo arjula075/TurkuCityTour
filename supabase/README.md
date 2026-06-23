@@ -10,6 +10,12 @@ Recommended order:
 
 1. `migrations/00001_create_user_profile.sql` — harden registration RPC
 2. `migrations/00002_submit_answer.sql` — server-authoritative answer validation
+3. `migrations/00003_is_admin_helper.sql` — `is_admin()` helper for policies
+4. `migrations/00004_user_progress_integrity.sql` — progress trigger + RLS (replaces `submit_answer` body)
+5. `migrations/00005_admin_table_rls.sql` — admin-only catalog mutations + `users` escalation trigger
+6. `migrations/00006_leaderboard_admin_only.sql` — admin-only leaderboard views (wraps views; safe to re-run)
+7. `migrations/00007_client_logs_hardening.sql` — log insert policy + rate limit
+8. `migrations/00008_validate_location_arrival.sql` — server-side geofence RPC
 
 ## Exporting the live schema (one-time baseline)
 
@@ -44,3 +50,5 @@ If your project predates this folder, capture the current state from the Supabas
 |----------|-------------|-------|
 | `create_user_profile(first_name, last_name)` | `Register.jsx` | Must use `auth.uid()` — never trust client `uid` |
 | `submit_answer(p_question_id, p_answer_id)` | `useAnswerSubmission` | Returns `{ is_correct }` only; updates `user_progress` |
+| `validate_location_arrival(p_location_id, p_latitude, p_longitude, p_tolerance_meters)` | `MapView` walk phase | Returns `{ arrived, distance_m }` |
+| `is_admin()` | RLS policies | Returns whether `auth.uid()` has `users.is_admin` |

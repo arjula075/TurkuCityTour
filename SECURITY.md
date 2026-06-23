@@ -4,7 +4,7 @@ TurkuCityTour is a client-heavy GPS quiz game backed by Supabase. This document 
 
 ## Threat model (summary)
 
-Players and admins authenticate via Supabase Auth. Game content and progress are stored in Postgres with RLS. The main risk is **client-trusted game logic**: a motivated user can call Supabase directly unless the database enforces integrity.
+Players and admins authenticate via Supabase Auth. Game content and progress are stored in Postgres with RLS. Game integrity is enforced by **RPCs + RLS** once migrations `00001`–`00008` are applied in Supabase.
 
 ## Controls in place
 
@@ -13,47 +13,55 @@ Players and admins authenticate via Supabase Auth. Game content and progress are
 | Secret scanner | `scripts/security-scan.mjs`, `security.yml` |
 | npm audit (prod deps) | `security.yml` |
 | Auth session validation | `AuthContext` uses `getUser()` |
-| RLS integration tests | `test/integration/*.rls.test.js` (nightly CI) |
+| Auth-gated routes | `AuthRoute` on `/map`, `/game-complete`, `/complete`, `/sorry` |
+| Server answer validation | `submit_answer` RPC + `useAnswerSubmission` |
+| Player query sanitization | `fetchLocationsForPlayer` (no `is_correct` / `correct_answer`) |
+| Server geofence check | `validate_location_arrival` RPC (client fallback if RPC missing) |
+| Client log hardening | `logger.js` — no third-party IP fetch, 500-char cap |
+| RLS integration tests | `test/integration/*.rls.test.js` |
+| Security headers | `public/_headers` (Netlify), `vercel.json` |
 | No XSS primitives | No `dangerouslySetInnerHTML` / `eval` in `src/` |
-| Game assignment gate | Unassigned players → `/sorry` |
 | `.env` gitignored | Service role never bundled via Vite |
 
-## Open risks (by priority)
+## Database migrations (apply in Supabase)
 
-### Critical
+| Migration | Purpose |
+|-----------|---------|
+| `00001_create_user_profile.sql` | Bind profiles to `auth.uid()` |
+| `00002_submit_answer.sql` | Server-authoritative answers |
+| `00003_is_admin_helper.sql` | `is_admin()` for policies |
+| `00004_user_progress_integrity.sql` | Block client `answered_correctly` writes |
+| `00005_admin_table_rls.sql` | Admin-only catalog mutations |
+| `00006_leaderboard_admin_only.sql` | Wrap leaderboard views with `is_admin()` filter |
+| `00007_client_logs_hardening.sql` | Log rate limit + length cap |
+| `00008_validate_location_arrival.sql` | Server geofence RPC |
 
-1. **Client-trusted game engine** — answers, scores, GPS, and progress validated in the browser until `submit_answer` RPC is live in Supabase.
-2. **`create_user_profile` RPC** — must enforce `auth.uid()` (see `supabase/migrations/00001_create_user_profile.sql`).
-
-### High
-
-- Correct answers exposed in player API responses → mitigated in app by `fetchLocationsForPlayer` (no `is_correct` / `correct_answer`).
-- Admin auth is UI-only → RLS must enforce `is_admin` on all admin tables.
-- Client-writable `user_progress` → partial RLS; tighten WITH CHECK after RPC rollout.
-
-### Medium
-
-- `/map` requires auth (enforced in `App.jsx` `AuthRoute`).
-- Open self-registration — configure in Supabase Auth if invite-only is desired.
-- RLS tests on PR when `SUPABASE_TEST_*` GitHub secrets are configured (`supabase-integration.yml`); nightly schedule as fallback.
-- No CSP headers — configure at host (Netlify/Vercel/nginx).
+> **Database:** Run SQL in Supabase Dashboard → **SQL Editor** → paste → **Run**. Merging code does not update production until SQL is executed.
 
 ## Remediation phases
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 0 | Version DB policies in `supabase/migrations/` | In progress |
-| 1 | Server-authoritative answers (`submit_answer` RPC) | SQL + client ready; **apply SQL in Supabase** |
-| 2 | Auth routes, admin RLS, leaderboard views | Partial (`AuthRoute`, DEV-only admin GPS) |
-| 3 | CSP, PR integration tests, `.env.example`, dep cleanup | Partial (PR integration wired) |
+| 0 | Version DB policies in `supabase/migrations/` | Migrations authored; **apply in Supabase** |
+| 1 | Server-authoritative answers + progress | Client + SQL ready |
+| 2 | Auth routes, admin RLS, leaderboard, logs | Client + SQL ready |
+| 3 | CSP headers, PR integration, `.env.example`, deps | Done |
+
+## Operational notes
+
+### Thunderforest API key
+
+`VITE_THUNDERFOREST_API_KEY` is embedded in the client bundle. In the [Thunderforest dashboard](https://www.thunderforest.com/), restrict the key by **HTTP referrer** to your production domain(s).
+
+### Self-registration
+
+Public signup is enabled in `Register.jsx`. To require invites only: Supabase Dashboard → **Authentication** → disable sign-ups or use an auth hook.
+
+### Baseline schema export (Phase 0)
+
+Export your live schema once with `supabase db dump --schema public` and commit as `00000_baseline.sql` so policies can be reviewed in PRs.
 
 See the [security plan canvas](/Users/ari.lahti/.cursor/projects/empty-window/canvases/turkucitytour-security-plan.canvas.tsx) for the full audit.
-
-## Database changes
-
-All SQL under `supabase/migrations/` must be applied manually:
-
-> **Database:** Run SQL in Supabase Dashboard → **SQL Editor** → paste → **Run**. Merging code does not update production until SQL is executed.
 
 ## Environment variables
 

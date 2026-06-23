@@ -36,8 +36,8 @@ export const e2eLocations = [
                 question_header: 'Cathedral history',
                 question_body: 'When was it consecrated?',
                 answers: [
-                    { id: 'a1', answer_text: '1300', is_correct: true },
-                    { id: 'a2', answer_text: '1900', is_correct: false },
+                    { id: 'a1', answer_text: '1300' },
+                    { id: 'a2', answer_text: '1900' },
                 ],
             },
         ],
@@ -141,6 +141,24 @@ export async function mockSupabaseApi(page, supabaseUrl = DEFAULT_SUPABASE_URL) 
                 status: 200,
                 contentType: 'application/json',
                 body: '[]',
+            });
+            return;
+        }
+
+        if (url.includes('/rpc/submit_answer')) {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ is_correct: true }),
+            });
+            return;
+        }
+
+        if (url.includes('/rpc/validate_location_arrival')) {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ arrived: false, distance_m: 120 }),
             });
             return;
         }

@@ -48,10 +48,10 @@ import {
     fetchUserProgress,
     gameAssignments,
     insertUserProgress,
-    markQuestionAsAnsweredCorrectly,
     storage,
     submitAnswer,
     updateUserProgress,
+    validateLocationArrival,
 } from './supabaseService.js';
 
 describe('supabaseService', () => {
@@ -95,6 +95,26 @@ describe('supabaseService', () => {
             expect(supabase.rpc).toHaveBeenCalledWith('submit_answer', {
                 p_question_id: 'q1',
                 p_answer_id: 'a1',
+            });
+        });
+    });
+
+    describe('validateLocationArrival', () => {
+        it('calls validate_location_arrival RPC', async () => {
+            const { supabase } = await import('./supabaseClient');
+            supabase.rpc.mockResolvedValue({
+                data: { arrived: true, distance_m: 12.3 },
+                error: null,
+            });
+
+            const result = await validateLocationArrival('loc-1', 60.45, 22.27, 50);
+
+            expect(result).toEqual({ arrived: true, distance_m: 12.3 });
+            expect(supabase.rpc).toHaveBeenCalledWith('validate_location_arrival', {
+                p_location_id: 'loc-1',
+                p_latitude: 60.45,
+                p_longitude: 22.27,
+                p_tolerance_meters: 50,
             });
         });
     });
@@ -296,18 +316,6 @@ describe('supabaseService', () => {
         });
     });
 
-    describe('markQuestionAsAnsweredCorrectly', () => {
-        it('updates answered_correctly on user_progress', async () => {
-            table('user_progress', { data: null, error: null });
-
-            await markQuestionAsAnsweredCorrectly('user-1', 'loc-1', true);
-
-            expect(mocks.tableMocks.user_progress.update).toHaveBeenCalledWith({
-                answered_correctly: true,
-            });
-            expect(mocks.tableMocks.user_progress.eq).toHaveBeenCalledWith('user_id', 'user-1');
-        });
-    });
 
     describe('adminGames', () => {
         it('fetches games ordered by created_at', async () => {

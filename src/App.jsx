@@ -52,11 +52,19 @@ const router = createBrowserRouter(
         },
         {
             path: '/complete',
-            element: <FinalMessage />,
+            element: (
+                <AuthRoute>
+                    <FinalMessage />
+                </AuthRoute>
+            ),
         },
         {
             path: '/game-complete',
-            element: <GameComplete />,
+            element: (
+                <AuthRoute>
+                    <GameComplete />
+                </AuthRoute>
+            ),
         },
         {
             path: '/admin',
@@ -68,7 +76,12 @@ const router = createBrowserRouter(
         },
         {
             path: "/sorry",
-            element: <Sorry />},
+            element: (
+                <AuthRoute>
+                    <Sorry />
+                </AuthRoute>
+            ),
+        },
         {
             path: '/results',
             element: (
