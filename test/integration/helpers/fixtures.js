@@ -88,6 +88,7 @@ export async function seedGameFixture(admin, { tag, gameName, locationName }) {
                 location_id: location.id,
                 question_header: `RLS question ${tag}`,
                 question_body: 'Integration fixture question',
+                correct_answer: `RLS answer ${tag}`,
             },
         ])
         .select('id')

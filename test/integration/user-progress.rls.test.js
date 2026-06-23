@@ -67,18 +67,17 @@ maybeDescribeIntegration('Supabase RLS — user_progress', () => {
     });
 
     test('non-admin cannot delete another users progress', async () => {
-        const { data: users, error: usersError } = await admin.auth.admin.listUsers();
-        expect(usersError).toBeNull();
+        await signIn(anon, integrationEnv.adminEmail, integrationEnv.adminPassword);
 
-        const otherUser = users.users.find(
-            (user) => user.email === integrationEnv.adminEmail
-        );
+        const { data: session } = await anon.auth.getUser();
+        const adminUserId = session.user?.id;
+        expect(adminUserId).toBeTruthy();
 
-        const { data: adminProgress, error: seedError } = await admin
+        const { data: adminProgress, error: seedError } = await anon
             .from('user_progress')
             .upsert(
                 {
-                    user_id: otherUser.id,
+                    user_id: adminUserId,
                     location_id: fixture.locationId,
                     hints_used: 0,
                 },
@@ -100,7 +99,9 @@ maybeDescribeIntegration('Supabase RLS — user_progress', () => {
         expect(error).toBeNull();
         expect(data).toEqual([]);
 
-        await admin.from('user_progress').delete().eq('id', adminProgress.id);
+        await signIn(anon, integrationEnv.adminEmail, integrationEnv.adminPassword);
+        await anon.from('user_progress').delete().eq('id', adminProgress.id);
+        await signOut(anon);
     });
 
     test('non-admin cannot upsert progress for another user', async () => {
@@ -126,7 +127,9 @@ maybeDescribeIntegration('Supabase RLS — user_progress', () => {
             .select('id');
 
         if (error) {
-            expect(error.message).toMatch(/row-level security|permission denied/i);
+            expect(error.message).toMatch(
+                /row-level security|permission denied|user_progress\.user_id must match auth\.uid/i
+            );
             return;
         }
 

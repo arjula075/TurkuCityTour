@@ -26,11 +26,13 @@ maybeDescribeIntegration('Supabase RPC — submit_answer', () => {
     });
 
     afterAll(async () => {
-        await admin
-            .from('user_progress')
-            .delete()
-            .eq('user_id', fixture.userId)
-            .eq('location_id', fixture.locationId);
+        if (fixture?.userId && fixture?.locationId) {
+            await admin
+                .from('user_progress')
+                .delete()
+                .eq('user_id', fixture.userId)
+                .eq('location_id', fixture.locationId);
+        }
         await cleanupGameFixture(admin, fixture);
         await signOut(anon);
     });
@@ -63,10 +65,11 @@ maybeDescribeIntegration('Supabase RPC — submit_answer', () => {
 
         const { error } = await anon
             .from('user_progress')
-            .update({ answered_correctly: true })
+            .update({ answered_correctly: false })
             .eq('user_id', fixture.userId)
             .eq('location_id', fixture.locationId);
 
         expect(error).not.toBeNull();
+        expect(error.message).toMatch(/answered_correctly can only be set via submit_answer/i);
     });
 });

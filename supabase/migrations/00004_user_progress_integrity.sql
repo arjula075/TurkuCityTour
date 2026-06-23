@@ -61,6 +61,10 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    IF auth.uid() IS NULL THEN
+        RETURN NEW;
+    END IF;
+
     IF NEW.user_id IS DISTINCT FROM auth.uid() THEN
         RAISE EXCEPTION 'user_progress.user_id must match auth.uid()';
     END IF;

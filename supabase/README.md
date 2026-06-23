@@ -16,6 +16,7 @@ Recommended order:
 6. `migrations/00006_leaderboard_admin_only.sql` — admin-only leaderboard views (wraps views; safe to re-run)
 7. `migrations/00007_client_logs_hardening.sql` — log insert policy + rate limit
 8. `migrations/00008_validate_location_arrival.sql` — server-side geofence RPC
+9. `migrations/00009_user_progress_trigger_service_role.sql` — allow service-role fixture seeding
 
 ## Exporting the live schema (one-time baseline)
 

@@ -56,7 +56,9 @@ maybeDescribeIntegration('Supabase RLS — users', () => {
             .select('is_admin');
 
         if (error) {
-            expect(error.message).toMatch(/row-level security|permission denied/i);
+            expect(error.message).toMatch(
+                /row-level security|permission denied|only admins may change is_admin/i
+            );
             return;
         }
 
@@ -73,7 +75,9 @@ maybeDescribeIntegration('Supabase RLS — users', () => {
             .select('is_admin');
 
         if (error) {
-            expect(error.message).toMatch(/row-level security|permission denied/i);
+            expect(error.message).toMatch(
+                /row-level security|permission denied|only admins may change is_admin/i
+            );
             return;
         }
 
