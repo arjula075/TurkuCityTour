@@ -1,3 +1,5 @@
+import { submitAnswer } from '../services/supabaseService';
+
 export default function useAnswerSubmission({
                                                 question,
                                                 selectedAnswer,
@@ -8,16 +10,20 @@ export default function useAnswerSubmission({
                                                 onAnsweredCorrect,
                                             }) {
     const handleSubmit = async () => {
-        if (!selectedAnswer || submitted) return;
+        if (!selectedAnswer || submitted || !question?.id) return;
 
-        const answer = question.answers.find(ans => ans.id === selectedAnswer);
-        const correct = answer?.is_correct ?? false;
+        try {
+            const result = await submitAnswer(question.id, selectedAnswer);
+            const correct = Boolean(result?.is_correct);
 
-        setIsCorrect(correct);
-        setSubmitted(true);
+            setIsCorrect(correct);
+            setSubmitted(true);
 
-        if (typeof onAnsweredCorrect === 'function') {
-            await onAnsweredCorrect(correct);
+            if (typeof onAnsweredCorrect === 'function') {
+                await onAnsweredCorrect(correct);
+            }
+        } catch (err) {
+            console.error('Answer submission failed:', err);
         }
     };
 

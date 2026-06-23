@@ -7,10 +7,9 @@ import { setAvailableGames, setSelectedGameId, setGameActive } from '../store/sl
 import FinalMessage from './FinalMessage';
 import { logEvent } from '../utils/logger';
 import {
-    fetchLocationsWithHintsQuestionsAnswers,
+    fetchLocationsForPlayer,
     updateUserProgress,
     clearUserProgress,
-    markQuestionAsAnsweredCorrectly
 } from '../services/supabaseService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -118,7 +117,7 @@ export default function MapView() {
         console.log("📍 Game ID available:", selectedGameId);
         console.log("📦 Fetching locations...");
 
-        fetchLocationsWithHintsQuestionsAnswers(selectedGameId).then((data) => {
+        fetchLocationsForPlayer(selectedGameId).then((data) => {
             const sorted = data.sort((a, b) => (a.display_order ?? a.id) - (b.display_order ?? b.id));
             const formatted = sorted.map(loc => ({
                 ...loc,
@@ -496,8 +495,7 @@ export default function MapView() {
                         setIsCorrect={setIsCorrect}
                         buttonDisabled={buttonDisabled}
                         setButtonDisabled={setButtonDisabled}
-                        onAnsweredCorrect={async (isCorrect) => {
-                            await markQuestionAsAnsweredCorrectly(user.id, locations[currentIndex].id, isCorrect);
+                        onAnsweredCorrect={async () => {
                             setCenterOnUser(true);
                         }}
                         onNextLocation={onNextLocation}
@@ -550,7 +548,7 @@ export default function MapView() {
                         <button onClick={() => navigate('/results')} className="btn-pill2">
                             Results
                         </button>
-                        {locations[currentIndex] && (
+                        {import.meta.env.DEV && locations[currentIndex] && (
                             <button
                                 className="btn-pill2 mt-4"
                                 onClick={() => {

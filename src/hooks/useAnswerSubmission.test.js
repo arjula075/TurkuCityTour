@@ -1,12 +1,18 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import useAnswerSubmission from './useAnswerSubmission';
+
+vi.mock('../services/supabaseService', () => ({
+    submitAnswer: vi.fn(),
+}));
+
+import { submitAnswer } from '../services/supabaseService';
 
 const question = {
     id: 'q1',
     answers: [
-        { id: 'a1', answer_text: 'Yes', is_correct: true },
-        { id: 'a2', answer_text: 'No', is_correct: false },
+        { id: 'a1', answer_text: 'Yes' },
+        { id: 'a2', answer_text: 'No' },
     ],
 };
 
@@ -31,19 +37,26 @@ function setup(overrides = {}) {
 }
 
 describe('useAnswerSubmission', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('marks a correct answer and calls onAnsweredCorrect', async () => {
+        submitAnswer.mockResolvedValue({ is_correct: true });
         const { result, setSubmitted, setIsCorrect, onAnsweredCorrect } = setup();
 
         await act(async () => {
             await result.current.handleSubmit();
         });
 
+        expect(submitAnswer).toHaveBeenCalledWith('q1', 'a1');
         expect(setIsCorrect).toHaveBeenCalledWith(true);
         expect(setSubmitted).toHaveBeenCalledWith(true);
         expect(onAnsweredCorrect).toHaveBeenCalledWith(true);
     });
 
     it('marks an incorrect answer', async () => {
+        submitAnswer.mockResolvedValue({ is_correct: false });
         const { result, setIsCorrect } = setup({ selectedAnswer: 'a2' });
 
         await act(async () => {
@@ -60,6 +73,7 @@ describe('useAnswerSubmission', () => {
             await result.current.handleSubmit();
         });
 
+        expect(submitAnswer).not.toHaveBeenCalled();
         expect(setSubmitted).not.toHaveBeenCalled();
     });
 
@@ -70,6 +84,7 @@ describe('useAnswerSubmission', () => {
             await result.current.handleSubmit();
         });
 
+        expect(submitAnswer).not.toHaveBeenCalled();
         expect(setSubmitted).not.toHaveBeenCalled();
     });
 

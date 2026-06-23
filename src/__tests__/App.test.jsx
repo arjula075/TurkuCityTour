@@ -4,10 +4,12 @@ import { Provider } from 'react-redux';
 import { vi } from 'vitest';
 import { makeStore } from '../test-utils/renderWithProviders';
 
+const mockGetUser = vi.fn().mockResolvedValue({ data: { user: null } });
+
 vi.mock('../services/supabaseClient', () => ({
     supabase: {
         auth: {
-            getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+            getUser: (...args) => mockGetUser(...args),
             onAuthStateChange: vi.fn(() => ({
                 data: { subscription: { unsubscribe: vi.fn() } },
             })),
@@ -21,6 +23,10 @@ vi.mock('../services/supabaseClient', () => ({
 import App from '../App';
 
 describe('App', () => {
+    beforeEach(() => {
+        mockGetUser.mockResolvedValue({ data: { user: null } });
+    });
+
     it('renders login page by default', async () => {
         render(
             <Provider store={makeStore()}>
@@ -31,5 +37,17 @@ describe('App', () => {
         expect(await screen.findByRole('heading', { name: /login/i })).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/email address/i)).toBeInTheDocument();
         expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
+    });
+
+    it('redirects unauthenticated users away from /map', async () => {
+        window.history.pushState({}, '', '/map');
+
+        render(
+            <Provider store={makeStore()}>
+                <App />
+            </Provider>
+        );
+
+        expect(await screen.findByRole('heading', { name: /login/i })).toBeInTheDocument();
     });
 });

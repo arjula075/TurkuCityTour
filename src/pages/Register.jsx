@@ -40,12 +40,15 @@ export default function Register() {
             return;
         }
 
-        // Insert user data into public.users
-        await supabase.rpc('create_user_profile', {
-            uid: userId,
+        const { error: profileError } = await supabase.rpc('create_user_profile', {
             first_name: form.first_name,
             last_name: form.last_name,
         });
+
+        if (profileError) {
+            setError(profileError.message);
+            return;
+        }
 
 
         // Optional: inform user to check email if confirmation is required

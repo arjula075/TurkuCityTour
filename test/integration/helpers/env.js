@@ -15,10 +15,7 @@ function readEnv(primary, fallback) {
 export const integrationEnv = {
     url: readEnv('SUPABASE_TEST_URL', 'VITE_SUPABASE_URL'),
     anonKey: readEnv('SUPABASE_TEST_ANON_KEY', 'VITE_SUPABASE_ANON_KEY'),
-    serviceRoleKey: readEnv(
-        'SUPABASE_TEST_SERVICE_ROLE_KEY',
-        'VITE_SUPABASE_SERVICE_ROLE_KEY'
-    ),
+    serviceRoleKey: readEnv('SUPABASE_TEST_SERVICE_ROLE_KEY'),
     userEmail: readEnv('SUPABASE_TEST_USER_EMAIL', 'VITE_USER1_EMAIL'),
     userPassword:
         readEnv('SUPABASE_TEST_USER_PASSWORD', 'VITE_USER_PASSWORD') ||

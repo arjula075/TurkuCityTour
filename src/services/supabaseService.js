@@ -12,17 +12,21 @@ const handle = async (promise) => {
 // --- Public APIs ---
 export { adminImages } from './adminImages';
 
-export const fetchAllHints = () =>
-    handle(supabase.from('hints').select('*').order('hint_order', { ascending: true }));
-
-export const fetchAllQuestions = () =>
-    handle(supabase.from('questions').select('*'));
-
 export const fetchUserProgress = (userId) =>
     handle(supabase.from('user_progress').select('*').eq('user_id', userId));
 
 export const insertUserProgress = (progress) =>
     handle(supabase.from('user_progress').insert([progress]));
+
+export async function submitAnswer(questionId, answerId) {
+    const data = await handle(
+        supabase.rpc('submit_answer', {
+            p_question_id: questionId,
+            p_answer_id: answerId,
+        })
+    );
+    return data;
+}
 
 export const fetchQuestionsAndAnswers = async (locationId) => {
     const questions = await handle(
@@ -121,6 +125,34 @@ export const adminLocations = {
 // Admin: User Progress
 export const adminUserProgress = adminTable('user_progress');
 
+export const fetchLocationsForPlayer = (gameId) =>
+    handle(
+        supabase
+            .from('locations')
+            .select(`
+                id,
+                name,
+                latitude,
+                longitude,
+                display_order,
+                hints (
+                    hint_text,
+                    hint_order
+                ),
+                questions (
+                    id,
+                    question_header,
+                    question_body,
+                    answers (
+                        id,
+                        answer_text
+                    )
+                )
+            `)
+            .eq('game_id', gameId)
+            .order('id', { ascending: true })
+    );
+
 export const fetchLocationsWithHintsQuestionsAnswers = (gameId) =>
     handle(
         supabase
@@ -147,7 +179,7 @@ export const fetchLocationsWithHintsQuestionsAnswers = (gameId) =>
                     )
                 )
             `)
-            .eq('game_id', gameId) // ✅ filter by game
+            .eq('game_id', gameId)
             .order('id', { ascending: true })
     );
 

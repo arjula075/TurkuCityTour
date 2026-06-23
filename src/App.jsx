@@ -12,9 +12,19 @@ import Results from './pages/Results';
 import Sorry from './pages/Sorry';
 import '@fontsource/montserrat';
 
+function AuthRoute({ children }) {
+    const { user, loading } = useAuthContext();
+    if (loading) return null;
+    if (!user) {
+        return <Navigate to="/" replace />;
+    }
+    return children;
+}
+
 // Admin route guard wrapper component
 function AdminRoute({ children }) {
-    const { profile } = useAuthContext();
+    const { profile, loading } = useAuthContext();
+    if (loading) return null;
     if (!profile?.is_admin) {
         return <Navigate to="/" replace />;
     }
@@ -34,7 +44,11 @@ const router = createBrowserRouter(
         },
         {
             path: '/map',
-            element: <MapView />,
+            element: (
+                <AuthRoute>
+                    <MapView />
+                </AuthRoute>
+            ),
         },
         {
             path: '/complete',

@@ -9,7 +9,9 @@ npm install
 npm run dev
 ```
 
-Copy `.env.test` to configure local Supabase credentials (not committed).
+Copy `.env.test` from `.env.example` to configure local Supabase credentials (not committed).
+
+Security notes: see [SECURITY.md](SECURITY.md). Database migrations: [supabase/README.md](supabase/README.md).
 
 ## Testing
 
@@ -43,7 +45,7 @@ Set `SUPABASE_TEST_URL` to opt in; other values fall back to `VITE_*` from `.env
 
 - `SUPABASE_TEST_URL` (required to run — not inferred from `VITE_SUPABASE_URL` alone)
 - `SUPABASE_TEST_ANON_KEY` (falls back to `VITE_SUPABASE_ANON_KEY`)
-- `SUPABASE_TEST_SERVICE_ROLE_KEY` (falls back to `VITE_SUPABASE_SERVICE_ROLE_KEY`)
+- `SUPABASE_TEST_SERVICE_ROLE_KEY` (required for integration tests — do not use `VITE_` prefix)
 - `SUPABASE_TEST_USER_EMAIL` / `SUPABASE_TEST_USER_PASSWORD`
 - `SUPABASE_TEST_ADMIN_EMAIL` / `SUPABASE_TEST_ADMIN_PASSWORD`
 

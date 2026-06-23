@@ -21,6 +21,7 @@ function table(name, result = { data: null, error: null }) {
 vi.mock('./supabaseClient', () => ({
     supabase: {
         from: mocks.from,
+        rpc: vi.fn(),
         storage: {
             from: mocks.storageFrom,
         },
@@ -40,9 +41,8 @@ import {
     adminUsers,
     clearAllUserProgress,
     clearUserProgress,
-    fetchAllHints,
-    fetchAllQuestions,
     fetchHintsResults,
+    fetchLocationsForPlayer,
     fetchQuestionsAndAnswers,
     fetchUserProfile,
     fetchUserProgress,
@@ -50,6 +50,7 @@ import {
     insertUserProgress,
     markQuestionAsAnsweredCorrectly,
     storage,
+    submitAnswer,
     updateUserProgress,
 } from './supabaseService.js';
 
@@ -60,28 +61,41 @@ describe('supabaseService', () => {
         mocks.from.mockImplementation((name) => table(name));
     });
 
-    describe('fetchAllHints', () => {
-        it('returns hints ordered by hint_order', async () => {
-            const hints = [{ id: 'h1', hint_order: 1 }];
-            table('hints', { data: hints, error: null });
+    describe('fetchLocationsForPlayer', () => {
+        it('loads locations without answer correctness fields', async () => {
+            const locations = [
+                {
+                    id: 'loc-1',
+                    questions: [{ id: 'q1', answers: [{ id: 'a1', answer_text: 'Yes' }] }],
+                },
+            ];
+            table('locations', { data: locations, error: null });
 
-            const result = await fetchAllHints();
+            const result = await fetchLocationsForPlayer('game-1');
 
-            expect(result).toEqual(hints);
-            expect(mocks.tableMocks.hints.order).toHaveBeenCalledWith('hint_order', {
-                ascending: true,
-            });
+            expect(result).toEqual(locations);
+            expect(mocks.tableMocks.locations.eq).toHaveBeenCalledWith('game_id', 'game-1');
+            const selectArg = mocks.tableMocks.locations.select.mock.calls[0][0];
+            expect(selectArg).not.toMatch(/is_correct/);
+            expect(selectArg).not.toMatch(/correct_answer/);
         });
     });
 
-    describe('fetchAllQuestions', () => {
-        it('returns all questions', async () => {
-            const questions = [{ id: 'q1' }];
-            table('questions', { data: questions, error: null });
+    describe('submitAnswer', () => {
+        it('calls submit_answer RPC and returns the result', async () => {
+            const { supabase } = await import('./supabaseClient');
+            supabase.rpc.mockResolvedValue({
+                data: { is_correct: true },
+                error: null,
+            });
 
-            const result = await fetchAllQuestions();
+            const result = await submitAnswer('q1', 'a1');
 
-            expect(result).toEqual(questions);
+            expect(result).toEqual({ is_correct: true });
+            expect(supabase.rpc).toHaveBeenCalledWith('submit_answer', {
+                p_question_id: 'q1',
+                p_answer_id: 'a1',
+            });
         });
     });
 

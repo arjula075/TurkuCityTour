@@ -102,4 +102,34 @@ maybeDescribeIntegration('Supabase RLS — user_progress', () => {
 
         await admin.from('user_progress').delete().eq('id', adminProgress.id);
     });
+
+    test('non-admin cannot upsert progress for another user', async () => {
+        const { data: users, error: usersError } = await admin.auth.admin.listUsers();
+        expect(usersError).toBeNull();
+
+        const otherUser = users.users.find(
+            (user) => user.email === integrationEnv.adminEmail
+        );
+
+        await signIn(anon, integrationEnv.userEmail, integrationEnv.userPassword);
+
+        const { data, error } = await anon
+            .from('user_progress')
+            .upsert(
+                {
+                    user_id: otherUser.id,
+                    location_id: fixture.locationId,
+                    hints_used: 99,
+                },
+                { onConflict: 'user_id,location_id' }
+            )
+            .select('id');
+
+        if (error) {
+            expect(error.message).toMatch(/row-level security|permission denied/i);
+            return;
+        }
+
+        expect(data).toEqual([]);
+    });
 });

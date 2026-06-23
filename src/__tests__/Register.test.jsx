@@ -60,7 +60,6 @@ describe('Register', () => {
         });
 
         expect(supabase.rpc).toHaveBeenCalledWith('create_user_profile', {
-            uid: 'user-1',
             first_name: 'Ada',
             last_name: 'Lovelace',
         });

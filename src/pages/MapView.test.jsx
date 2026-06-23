@@ -31,10 +31,9 @@ vi.mock('../hooks/useGeolocation', () => ({
 }));
 
 vi.mock('../services/supabaseService', () => ({
-    fetchLocationsWithHintsQuestionsAnswers: vi.fn(),
+    fetchLocationsForPlayer: vi.fn(),
     updateUserProgress: vi.fn().mockResolvedValue(undefined),
     clearUserProgress: vi.fn().mockResolvedValue(undefined),
-    markQuestionAsAnsweredCorrectly: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('react-leaflet', () => ({
@@ -65,7 +64,7 @@ vi.mock('leaflet/dist/images/marker-icon.png', () => ({ default: '' }));
 vi.mock('leaflet/dist/images/marker-shadow.png', () => ({ default: '' }));
 
 import {
-    fetchLocationsWithHintsQuestionsAnswers,
+    fetchLocationsForPlayer,
     updateUserProgress,
 } from '../services/supabaseService';
 
@@ -141,7 +140,7 @@ describe('MapView', () => {
             error: null,
         };
         mockUseGeolocation.mockImplementation(() => geolocationState.current);
-        fetchLocationsWithHintsQuestionsAnswers.mockResolvedValue(mockLocations);
+        fetchLocationsForPlayer.mockResolvedValue(mockLocations);
         vi.stubGlobal('alert', vi.fn());
     });
 

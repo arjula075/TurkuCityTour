@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, beforeEach } from 'vitest';
 import QuestionDisplay from './QuestionDisplay';
+
+vi.mock('../../services/supabaseService', () => ({
+    submitAnswer: vi.fn(),
+}));
+
+import { submitAnswer } from '../../services/supabaseService';
 
 function QuestionHarness({ question, onAnsweredCorrect = vi.fn(), onNextLocation = vi.fn() }) {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -37,6 +43,10 @@ const question = {
 };
 
 describe('QuestionDisplay', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('renders question text and answer choices', () => {
         render(<QuestionHarness question={question} />);
 
@@ -47,6 +57,7 @@ describe('QuestionDisplay', () => {
     });
 
     it('submits a correct answer and shows feedback', async () => {
+        submitAnswer.mockResolvedValue({ is_correct: true });
         const onAnsweredCorrect = vi.fn().mockResolvedValue(undefined);
 
         render(
@@ -63,6 +74,7 @@ describe('QuestionDisplay', () => {
     });
 
     it('submits an incorrect answer', async () => {
+        submitAnswer.mockResolvedValue({ is_correct: false });
         render(<QuestionHarness question={question} />);
 
         fireEvent.click(screen.getByLabelText('1900'));
@@ -74,6 +86,7 @@ describe('QuestionDisplay', () => {
     });
 
     it('calls onNextLocation after answering', async () => {
+        submitAnswer.mockResolvedValue({ is_correct: true });
         const onNextLocation = vi.fn();
 
         render(
