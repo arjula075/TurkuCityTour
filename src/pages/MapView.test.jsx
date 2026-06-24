@@ -35,6 +35,7 @@ vi.mock('../services/supabaseService', () => ({
     updateUserProgress: vi.fn().mockResolvedValue(undefined),
     clearUserProgress: vi.fn().mockResolvedValue(undefined),
     validateLocationArrival: vi.fn().mockResolvedValue({ arrived: false }),
+    recordLocationGuess: vi.fn().mockResolvedValue({ accepted: true, hints_used: 5 }),
 }));
 
 vi.mock('react-leaflet', () => ({
@@ -68,6 +69,7 @@ import {
     fetchLocationsForPlayer,
     updateUserProgress,
     validateLocationArrival,
+    recordLocationGuess,
 } from '../services/supabaseService';
 
 function buildAuthValue(userProgress = []) {
@@ -180,8 +182,15 @@ describe('MapView', () => {
         });
 
         await waitFor(() => {
-            expect(updateUserProgress).toHaveBeenCalledWith('user-1', 'loc-1', 5);
+            expect(recordLocationGuess).toHaveBeenCalledWith(
+                'loc-1',
+                mockLocations[0].latitude,
+                mockLocations[0].longitude,
+                5,
+                100
+            );
         });
+        expect(updateUserProgress).not.toHaveBeenCalled();
         expect(screen.getByText(/now move to the location/i)).toBeInTheDocument();
         expect(screen.getByText(/Distance to Turku Cathedral/i)).toBeInTheDocument();
     });

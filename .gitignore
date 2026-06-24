@@ -28,3 +28,9 @@ test-results
 *.sln
 *.sw?
 *.zip
+
+# Native signing (never commit)
+*.keystore
+*.jks
+*.p12
+*.mobileprovision

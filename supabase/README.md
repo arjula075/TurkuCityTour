@@ -17,6 +17,10 @@ Recommended order:
 7. `migrations/00007_client_logs_hardening.sql` — log insert policy + rate limit
 8. `migrations/00008_validate_location_arrival.sql` — server-side geofence RPC
 9. `migrations/00009_user_progress_trigger_service_role.sql` — allow service-role fixture seeding
+10. `migrations/00010_answers_mask_is_correct.sql` — mask `is_correct` for non-admin reads
+11. `migrations/00011_record_location_guess.sql` — server-validated map-click guess
+12. `migrations/00012_storage_policies.sql` — storage.objects folder-scoped access
+13. `migrations/00013_submit_answer_use_answers_data.sql` — fix submit_answer after answers view (run after 00010)
 
 ## Exporting the live schema (one-time baseline)
 
@@ -51,5 +55,6 @@ If your project predates this folder, capture the current state from the Supabas
 |----------|-------------|-------|
 | `create_user_profile(first_name, last_name)` | `Register.jsx` | Must use `auth.uid()` — never trust client `uid` |
 | `submit_answer(p_question_id, p_answer_id)` | `useAnswerSubmission` | Returns `{ is_correct }` only; updates `user_progress` |
-| `validate_location_arrival(p_location_id, p_latitude, p_longitude, p_tolerance_meters)` | `MapView` walk phase | Returns `{ arrived, distance_m }` |
+| `validate_location_arrival(...)` | `MapView` walk phase | Returns `{ arrived, distance_m }` |
+| `record_location_guess(...)` | `MapView` map-click guess | Returns `{ accepted, distance_m, hints_used }` |
 | `is_admin()` | RLS policies | Returns whether `auth.uid()` has `users.is_admin` |

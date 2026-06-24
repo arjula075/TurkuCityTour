@@ -1,0 +1,27 @@
+/* Mobile layout — safe areas, dynamic viewport, map sizing (390×844 baseline). */
+
+.map-mobile-height {
+    height: min(42dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 14rem));
+    min-height: 200px;
+    width: 100%;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.page-safe-area {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+}
+
+.min-h-screen-safe {
+    min-height: 100dvh;
+    min-height: 100vh; /* fallback for older WebViews */
+}
+
+/* Auth forms — safe area + extra bottom padding when software keyboard opens */
+.auth-page {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    scroll-padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}

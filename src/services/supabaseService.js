@@ -45,6 +45,25 @@ export async function validateLocationArrival(
     return data;
 }
 
+export async function recordLocationGuess(
+    locationId,
+    latitude,
+    longitude,
+    hintsUsed,
+    toleranceMeters = 100
+) {
+    const data = await handle(
+        supabase.rpc('record_location_guess', {
+            p_location_id: locationId,
+            p_latitude: latitude,
+            p_longitude: longitude,
+            p_hints_used: hintsUsed,
+            p_tolerance_meters: toleranceMeters,
+        })
+    );
+    return data;
+}
+
 export const fetchQuestionsAndAnswers = async (locationId) => {
     const questions = await handle(
         supabase.from('questions').select('*').eq('location_id', locationId)

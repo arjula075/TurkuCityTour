@@ -29,7 +29,7 @@ export default function Login() {
     };
 
     return (
-        <div className="p-4 mx-auto">
+        <div className="auth-page page-safe-area min-h-screen-safe">
             <h1 className="text-6xl mb-4">Login</h1>
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">

@@ -34,7 +34,33 @@ maybeDescribeIntegration('Supabase RLS — answers', () => {
         await signOut(anon);
     });
 
-    test('authenticated user can SELECT answers', async () => {
+    test('non-admin cannot read is_correct from answers', async () => {
+        await signIn(anon, integrationEnv.userEmail, integrationEnv.userPassword);
+
+        const { data, error } = await anon
+            .from('answers')
+            .select('id, is_correct')
+            .eq('question_id', fixture.questionId);
+
+        expect(error).toBeNull();
+        expect(data?.length).toBeGreaterThan(0);
+        expect(data?.every((row) => row.is_correct === null)).toBe(true);
+    });
+
+    test('admin can read is_correct from answers', async () => {
+        await signIn(anon, integrationEnv.adminEmail, integrationEnv.adminPassword);
+
+        const { data, error } = await anon
+            .from('answers')
+            .select('id, is_correct')
+            .eq('id', fixture.answerId)
+            .single();
+
+        expect(error).toBeNull();
+        expect(data?.is_correct).toBe(true);
+    });
+
+    test('authenticated user can SELECT answer ids', async () => {
         await signIn(anon, integrationEnv.userEmail, integrationEnv.userPassword);
 
         const { data, error } = await anon.from('answers').select('id').limit(5);
@@ -54,7 +80,7 @@ maybeDescribeIntegration('Supabase RLS — answers', () => {
         ]);
 
         expect(error).not.toBeNull();
-        expect(error.message).toMatch(/row-level security/i);
+        expect(error.message).toMatch(/row-level security|only admins may insert answers/i);
     });
 
     test('admin user can INSERT and DELETE answers', async () => {

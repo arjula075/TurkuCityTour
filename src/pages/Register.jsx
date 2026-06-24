@@ -60,7 +60,7 @@ export default function Register() {
 
 
     return (
-        <div className="p-4 max-w-md mx-auto">
+        <div className="auth-page page-safe-area min-h-screen-safe max-w-md mx-auto">
             <h1 className="text-5xl mb-4">Register</h1>
             <form onSubmit={handleRegister} className="flex flex-col gap-4">
                 <input

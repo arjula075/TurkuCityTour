@@ -5,8 +5,11 @@ import App from './App';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import './styles/forms.css';
+import './styles/mobile.css';
 import 'leaflet/dist/leaflet.css';
+import { initNativeShell } from './utils/initNativeShell';
 
+initNativeShell();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

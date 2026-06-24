@@ -48,6 +48,7 @@ import {
     fetchUserProgress,
     gameAssignments,
     insertUserProgress,
+    recordLocationGuess,
     storage,
     submitAnswer,
     updateUserProgress,
@@ -115,6 +116,27 @@ describe('supabaseService', () => {
                 p_latitude: 60.45,
                 p_longitude: 22.27,
                 p_tolerance_meters: 50,
+            });
+        });
+    });
+
+    describe('recordLocationGuess', () => {
+        it('calls record_location_guess RPC', async () => {
+            const { supabase } = await import('./supabaseClient');
+            supabase.rpc.mockResolvedValue({
+                data: { accepted: true, hints_used: 5, distance_m: 10 },
+                error: null,
+            });
+
+            const result = await recordLocationGuess('loc-1', 60.45, 22.27, 5, 100);
+
+            expect(result).toEqual({ accepted: true, hints_used: 5, distance_m: 10 });
+            expect(supabase.rpc).toHaveBeenCalledWith('record_location_guess', {
+                p_location_id: 'loc-1',
+                p_latitude: 60.45,
+                p_longitude: 22.27,
+                p_hints_used: 5,
+                p_tolerance_meters: 100,
             });
         });
     });

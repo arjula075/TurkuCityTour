@@ -163,6 +163,15 @@ export async function mockSupabaseApi(page, supabaseUrl = DEFAULT_SUPABASE_URL) 
             return;
         }
 
+        if (url.includes('/rpc/record_location_guess')) {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ accepted: true, hints_used: 5, distance_m: 10 }),
+            });
+            return;
+        }
+
         await route.fulfill({
             status: 200,
             contentType: 'application/json',

@@ -11,6 +11,7 @@ import {
     updateUserProgress,
     clearUserProgress,
     validateLocationArrival,
+    recordLocationGuess,
 } from '../services/supabaseService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -23,6 +24,7 @@ import QuestionDisplay from '../components/mapview/QuestionDisplay';
 import TrainingPrompt from '../components/mapview/TrainingPrompt';
 import useGeolocation from '../hooks/useGeolocation';
 import { getDistance } from '../utils/geo';
+import { isAdminEnabled } from '../config/features';
 
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: markerIcon2x,
@@ -78,7 +80,7 @@ export default function MapView() {
     const [manualLocation, setManualLocation] = useState(null);
     const location = manualLocation ?? gpsLocation;
 
-    const isAdmin = profile?.is_admin;
+    const isAdmin = isAdminEnabled && profile?.is_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
 
     const TRAINING_POINTS = [
@@ -258,7 +260,7 @@ export default function MapView() {
     };
 
 
-    const handleMapClick = (e) => {
+    const handleMapClick = async (e) => {
         if (trainingMode) {
             const point = TRAINING_POINTS[trainingStep];
             const d = getDistance(e.latlng.lat, e.latlng.lng, point.lat, point.lng);
@@ -273,16 +275,46 @@ export default function MapView() {
         } else if (gameActive && !guessed) {
             setCenterOnUser(false);
             const loc = locations[currentIndex];
-            const d = getDistance(e.latlng.lat, e.latlng.lng, loc.latitude, loc.longitude);
-            if (d <= 100) {
-                const pts = Math.max(5 - hintIndex, 1);
+            const pts = Math.max(5 - hintIndex, 1);
+
+            try {
+                const result = await recordLocationGuess(
+                    loc.id,
+                    e.latlng.lat,
+                    e.latlng.lng,
+                    pts,
+                    100
+                );
+
+                if (!result?.accepted) {
+                    const dist = result?.distance_m ?? getDistance(
+                        e.latlng.lat,
+                        e.latlng.lng,
+                        loc.latitude,
+                        loc.longitude
+                    );
+                    alert(`❌ Too far! ${Math.round(dist)} meters.`);
+                    return;
+                }
+
                 setScore((s) => s + pts);
                 setGuessed(true);
-                updateUserProgress(user.id, loc.id, pts);
                 setWaiting(true);
                 alert(`✅ ${pts} points. Now walk to the location.`);
                 setCenterOnUser(true);
-            } else alert(`❌ Too far! ${Math.round(d)} meters.`);
+            } catch (err) {
+                const d = getDistance(e.latlng.lat, e.latlng.lng, loc.latitude, loc.longitude);
+                if (d <= 100) {
+                    setScore((s) => s + pts);
+                    setGuessed(true);
+                    await updateUserProgress(user.id, loc.id, pts);
+                    setWaiting(true);
+                    alert(`✅ ${pts} points. Now walk to the location.`);
+                    setCenterOnUser(true);
+                } else {
+                    alert(`❌ Too far! ${Math.round(d)} meters.`);
+                }
+            }
         }
     };
 
@@ -405,15 +437,15 @@ export default function MapView() {
 
     if (!ready) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <p className="font-semibold text-gray-500 text-6xl">Loading game...</p>
+            <div className="flex items-center justify-center min-h-screen-safe page-safe-area">
+                <p className="font-semibold text-gray-500 text-4xl sm:text-6xl">Loading game...</p>
             </div>
         );
     }
 
     return (
 
-        <div className="p-4 bg-white animate-fadeIn">
+        <div className="page-safe-area bg-white animate-fadeIn min-h-screen-safe">
             {!gameActive && (
                 <h2>
                     Welcome, {profile?.first_name ?? user?.email ?? 'Guest'}
@@ -429,7 +461,7 @@ export default function MapView() {
                 console.log("📍 currentLoc:", currentLoc);
 
                 return location ? (
-                    <MapContainer center={[location.lat, location.lng]} zoom={15} style={{ height: "40vh" }}>
+                    <MapContainer center={[location.lat, location.lng]} zoom={15} className="map-mobile-height">
                         <TileLayer
                             url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
                             attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'

@@ -17,5 +17,7 @@ test.describe('Map mobile smoke', () => {
         const box = await map.boundingBox();
         expect(box?.height ?? 0).toBeGreaterThan(100);
         expect(box?.width ?? 0).toBeGreaterThan(200);
+
+        await expect(page.locator('.map-mobile-height')).toBeVisible();
     });
 });

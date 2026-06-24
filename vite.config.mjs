@@ -17,6 +17,12 @@ export default defineConfig(({ mode }) => {
             'import.meta.env.VITE_THUNDERFOREST_API_KEY': JSON.stringify(
                 env.VITE_THUNDERFOREST_API_KEY ?? 'test-thunderforest-key'
             ),
+            'import.meta.env.VITE_ENABLE_ADMIN': JSON.stringify(
+                env.VITE_ENABLE_ADMIN ?? 'true'
+            ),
+            'import.meta.env.VITE_MOBILE_BUILD': JSON.stringify(
+                env.VITE_MOBILE_BUILD ?? 'false'
+            ),
         },
         test: {
             globals: true,

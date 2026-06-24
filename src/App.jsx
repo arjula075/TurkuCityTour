@@ -1,16 +1,27 @@
 // TurkuCityTour/src/App.jsx
-import React from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import {
+    createBrowserRouter,
+    createHashRouter,
+    RouterProvider,
+    Navigate,
+} from 'react-router-dom';
 import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import Login from './pages/Login';
 import MapView from './pages/MapView';
 import FinalMessage from './pages/FinalMessage';
 import Register from './pages/Register';
-import AdminView from './pages/AdminView';
 import GameComplete from './pages/GameComplete';
-import Results from './pages/Results';
 import Sorry from './pages/Sorry';
+import { isAdminEnabled, isMobileBuild } from './config/features';
 import '@fontsource/montserrat';
+
+const AdminView = isAdminEnabled
+    ? React.lazy(() => import('./pages/AdminView'))
+    : null;
+const Results = isAdminEnabled
+    ? React.lazy(() => import('./pages/Results'))
+    : null;
 
 function AuthRoute({ children }) {
     const { user, loading } = useAuthContext();
@@ -21,89 +32,102 @@ function AuthRoute({ children }) {
     return children;
 }
 
-// Admin route guard wrapper component
 function AdminRoute({ children }) {
     const { profile, loading } = useAuthContext();
     if (loading) return null;
-    if (!profile?.is_admin) {
+    if (!isAdminEnabled || !profile?.is_admin) {
         return <Navigate to="/" replace />;
     }
     return children;
 }
 
-// Routes definition
-const router = createBrowserRouter(
-    [
-        {
-            path: '/',
-            element: <Login />,
-        },
-        {
-            path: '/register',
-            element: <Register />,
-        },
-        {
-            path: '/map',
-            element: (
-                <AuthRoute>
-                    <MapView />
-                </AuthRoute>
-            ),
-        },
-        {
-            path: '/complete',
-            element: (
-                <AuthRoute>
-                    <FinalMessage />
-                </AuthRoute>
-            ),
-        },
-        {
-            path: '/game-complete',
-            element: (
-                <AuthRoute>
-                    <GameComplete />
-                </AuthRoute>
-            ),
-        },
-        {
-            path: '/admin',
-            element: (
-                <AdminRoute>
-                    <AdminView />
-                </AdminRoute>
-            ),
-        },
-        {
-            path: "/sorry",
-            element: (
-                <AuthRoute>
-                    <Sorry />
-                </AuthRoute>
-            ),
-        },
-        {
-            path: '/results',
-            element: (
-                <AdminRoute>
-                    <Results />
-                </AdminRoute>
-            ),
-        },
-        // 👇 Catch-all fallback route
-        {
-            path: '*',
-            element: <Navigate to="/" replace />,
-        },
+function LazyAdminPage({ Page }) {
+    return (
+        <Suspense fallback={null}>
+            <Page />
+        </Suspense>
+    );
+}
 
-    ],
+const playerRoutes = [
     {
-        future: {
-            v7_startTransition: true,
-        },
-    }
-);
+        path: '/',
+        element: <Login />,
+    },
+    {
+        path: '/register',
+        element: <Register />,
+    },
+    {
+        path: '/map',
+        element: (
+            <AuthRoute>
+                <MapView />
+            </AuthRoute>
+        ),
+    },
+    {
+        path: '/complete',
+        element: (
+            <AuthRoute>
+                <FinalMessage />
+            </AuthRoute>
+        ),
+    },
+    {
+        path: '/game-complete',
+        element: (
+            <AuthRoute>
+                <GameComplete />
+            </AuthRoute>
+        ),
+    },
+    {
+        path: '/sorry',
+        element: (
+            <AuthRoute>
+                <Sorry />
+            </AuthRoute>
+        ),
+    },
+];
 
+const adminRoutes = isAdminEnabled
+    ? [
+          {
+              path: '/admin',
+              element: (
+                  <AdminRoute>
+                      <LazyAdminPage Page={AdminView} />
+                  </AdminRoute>
+              ),
+          },
+          {
+              path: '/results',
+              element: (
+                  <AdminRoute>
+                      <LazyAdminPage Page={Results} />
+                  </AdminRoute>
+              ),
+          },
+      ]
+    : [];
+
+const router = (isMobileBuild ? createHashRouter : createBrowserRouter)(
+  [
+      ...playerRoutes,
+      ...adminRoutes,
+      {
+          path: '*',
+          element: <Navigate to="/" replace />,
+      },
+  ],
+  {
+      future: {
+          v7_startTransition: true,
+      },
+  }
+);
 
 function App() {
     return (
