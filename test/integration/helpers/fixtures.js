@@ -2,6 +2,9 @@ import { integrationEnv } from './env.js';
 
 const FIXTURE_TAG = `e2e-${Date.now()}`;
 
+/** Platform org for legacy games; matches 00016_multi_tenant_schema.sql */
+export const PLATFORM_ORG_ID = '00000000-0000-0000-0000-000000000001';
+
 export function buildFixtureIds() {
     return {
         tag: FIXTURE_TAG,
@@ -37,10 +40,10 @@ export async function ensureAuthUsers(admin) {
     }
 }
 
-export async function seedGameFixture(admin, { tag, gameName, locationName }) {
+export async function seedGameFixture(admin, { tag, gameName, locationName, ownerOrgId = PLATFORM_ORG_ID }) {
     const { data: game, error: gameError } = await admin
         .from('games')
-        .insert([{ name: gameName }])
+        .insert([{ name: gameName, owner_org_id: ownerOrgId }])
         .select('id')
         .single();
 
@@ -143,4 +146,77 @@ export async function cleanupGameFixture(admin, fixture) {
         await admin.from('game_players').delete().eq('game_id', fixture.gameId);
         await admin.from('games').delete().eq('id', fixture.gameId);
     }
+}
+
+export async function ensureUserProfile(admin, userId, { firstName = 'Test', lastName = 'User' } = {}) {
+    const { error } = await admin.from('users').upsert(
+        {
+            id: userId,
+            first_name: firstName,
+            last_name: lastName,
+            is_platform_admin: false,
+        },
+        { onConflict: 'id' }
+    );
+
+    if (error) {
+        throw new Error(`Failed to ensure user profile: ${error.message}`);
+    }
+}
+
+export async function seedOrgFixture(
+    admin,
+    { tag, ownerUserId, maxGames = 3, maxPlayers = 1, status = 'trialing' }
+) {
+    const { data: org, error: orgError } = await admin
+        .from('organizations')
+        .insert([{ name: `Org ${tag}` }])
+        .select('id')
+        .single();
+
+    if (orgError) throw new Error(`Failed to seed organization: ${orgError.message}`);
+
+    const { error: subError } = await admin.from('subscriptions').insert([
+        {
+            org_id: org.id,
+            status,
+            tier: 'trial',
+            max_games: maxGames,
+            max_players: maxPlayers,
+        },
+    ]);
+
+    if (subError) throw new Error(`Failed to seed subscription: ${subError.message}`);
+
+    const { error: memberError } = await admin.from('organization_members').insert([
+        {
+            org_id: org.id,
+            user_id: ownerUserId,
+            role: 'owner',
+        },
+    ]);
+
+    if (memberError) {
+        throw new Error(`Failed to seed organization_members: ${memberError.message}`);
+    }
+
+    return { orgId: org.id };
+}
+
+export async function cleanupOrgFixture(admin, orgFixture) {
+    if (!orgFixture?.orgId) return;
+
+    const { data: games } = await admin
+        .from('games')
+        .select('id')
+        .eq('owner_org_id', orgFixture.orgId);
+
+    for (const game of games ?? []) {
+        await admin.from('game_players').delete().eq('game_id', game.id);
+        await admin.from('games').delete().eq('id', game.id);
+    }
+
+    await admin.from('organization_members').delete().eq('org_id', orgFixture.orgId);
+    await admin.from('subscriptions').delete().eq('org_id', orgFixture.orgId);
+    await admin.from('organizations').delete().eq('id', orgFixture.orgId);
 }

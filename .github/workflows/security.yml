@@ -42,3 +42,9 @@ jobs:
 
       - name: Run unit and component tests
         run: npm run security:test
+
+      - name: Verify production security headers
+        if: ${{ secrets.DEPLOY_URL != '' }}
+        env:
+          DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
+        run: npm run security:verify-headers

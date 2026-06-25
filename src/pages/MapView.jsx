@@ -12,6 +12,7 @@ import {
     clearUserProgress,
     validateLocationArrival,
     recordLocationGuess,
+    recordGiveUp,
 } from '../services/supabaseService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -24,6 +25,7 @@ import QuestionDisplay from '../components/mapview/QuestionDisplay';
 import TrainingPrompt from '../components/mapview/TrainingPrompt';
 import useGeolocation from '../hooks/useGeolocation';
 import { getDistance } from '../utils/geo';
+import { prefetchGameAssets } from '../utils/prefetchAssets';
 import { isAdminEnabled } from '../config/features';
 
 L.Icon.Default.mergeOptions({
@@ -80,7 +82,10 @@ export default function MapView() {
     const [manualLocation, setManualLocation] = useState(null);
     const location = manualLocation ?? gpsLocation;
 
-    const isAdmin = isAdminEnabled && profile?.is_admin;
+    const hintPanelOpen = gameActive && !guessed && !showQuestion;
+    const mapGesturesEnabled = !hintPanelOpen && !showQuestion;
+
+    const isAdmin = isAdminEnabled && profile?.is_platform_admin;
     const thunderforestKey = import.meta.env.VITE_THUNDERFOREST_API_KEY;
 
     const TRAINING_POINTS = [
@@ -394,10 +399,12 @@ export default function MapView() {
     const handleGiveUp = async () => {
         const loc = locations[currentIndex];
 
-        // Update user progress with 0 points
-        await updateUserProgress(user.id, loc.id, 0);
+        try {
+            await recordGiveUp(loc.id);
+        } catch {
+            await updateUserProgress(user.id, loc.id, 0);
+        }
 
-        // Set state: guessed, hintIndex reset, start walking to location
         setGuessed(true);
         setHintIndex(0);
         setWaiting(true);
@@ -461,7 +468,16 @@ export default function MapView() {
                 console.log("📍 currentLoc:", currentLoc);
 
                 return location ? (
-                    <MapContainer center={[location.lat, location.lng]} zoom={15} className="map-mobile-height">
+                    <MapContainer
+                        center={[location.lat, location.lng]}
+                        zoom={15}
+                        className={`map-mobile-height${hintPanelOpen ? ' map-view-only' : ''}`}
+                        dragging={mapGesturesEnabled}
+                        touchZoom={mapGesturesEnabled}
+                        doubleClickZoom={mapGesturesEnabled}
+                        scrollWheelZoom={false}
+                        zoomControl={false}
+                    >
                         <TileLayer
                             url={`https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}{r}.png?apikey=${thunderforestKey}`}
                             attribution='&copy; Thunderforest &copy; OpenStreetMap contributors'
@@ -482,7 +498,7 @@ export default function MapView() {
             })()}
 
 
-            <div className="mt-6 mx-auto space-y-4">
+            <div className="mt-6 mx-auto space-y-4 map-game-panel">
                 {!gameActive && !gameEnded && (
                     <>
                         {locations.length > 0 && (
@@ -490,6 +506,7 @@ export default function MapView() {
                                 className="btn-pill2"
                                 onClick={async () => {
                                     await clearUserProgress(user.id, selectedGameId);
+                                    prefetchGameAssets(locations);
                                     dispatch(setGameActive(true));
                                     setCurrentIndex(0);
                                     setHintIndex(0);

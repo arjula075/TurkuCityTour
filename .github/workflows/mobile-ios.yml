@@ -1,0 +1,56 @@
+name: Mobile iOS
+
+on:
+  pull_request:
+    branches: [First-release]
+  push:
+    branches: [First-release]
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator-build:
+    runs-on: macos-latest
+    env:
+      CI: true
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://example.supabase.co' }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || 'ci-anon-key' }}
+      VITE_THUNDERFOREST_API_KEY: ${{ vars.VITE_THUNDERFOREST_API_KEY || 'ci-thunderforest-key' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web + cap sync
+        run: npm run build:mobile
+
+      - name: Build for iOS Simulator (unsigned)
+        run: |
+          cd ios/App
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Upload Simulator app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: ios/App/build/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error

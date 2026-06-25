@@ -21,6 +21,14 @@ Recommended order:
 11. `migrations/00011_record_location_guess.sql` — server-validated map-click guess
 12. `migrations/00012_storage_policies.sql` — storage.objects folder-scoped access
 13. `migrations/00013_submit_answer_use_answers_data.sql` — fix submit_answer after answers view (run after 00010)
+14. `migrations/00014_drop_legacy_write_policies.sql` — remove legacy permissive catalog write policies
+15. `migrations/00015_record_give_up.sql` — server-validated give-up (hints_used = 0)
+16. `migrations/00016_multi_tenant_schema.sql` — organizations, subscriptions, members, `games.owner_org_id`, rename `is_platform_admin`
+17. `migrations/00017_org_tenancy_rls.sql` — org-scoped catalog RLS, subscription limits, tenancy helpers
+
+## Auditing RLS
+
+After applying `00014`, run `scripts/audit-rls.sql` in the SQL Editor. Any remaining rows are policies outside the `turkucitytour_*` set — review before dropping manually.
 
 ## Exporting the live schema (one-time baseline)
 
@@ -37,8 +45,11 @@ If your project predates this folder, capture the current state from the Supabas
 
 | Table / view | Purpose |
 |--------------|---------|
-| `users` | Profile (`first_name`, `last_name`, `is_admin`, `message`) |
-| `games` | Tour definitions |
+| `users` | Profile (`first_name`, `last_name`, `is_platform_admin`, `message`) |
+| `organizations` | Host tenant (name, `stripe_customer_id`) |
+| `subscriptions` | Per-org plan (`status`, `tier`, `max_games`, `max_players`) |
+| `organization_members` | User ↔ org membership (`owner`, `member`) |
+| `games` | Tour definitions (`owner_org_id`) |
 | `game_players` | Player ↔ game assignments |
 | `locations` | GPS stops per game |
 | `hints` | Hint text per location |
@@ -57,4 +68,9 @@ If your project predates this folder, capture the current state from the Supabas
 | `submit_answer(p_question_id, p_answer_id)` | `useAnswerSubmission` | Returns `{ is_correct }` only; updates `user_progress` |
 | `validate_location_arrival(...)` | `MapView` walk phase | Returns `{ arrived, distance_m }` |
 | `record_location_guess(...)` | `MapView` map-click guess | Returns `{ accepted, distance_m, hints_used }` |
-| `is_admin()` | RLS policies | Returns whether `auth.uid()` has `users.is_admin` |
+| `record_give_up(p_location_id)` | `MapView` give-up | Returns `{ hints_used: 0 }` |
+| `is_admin()` | RLS policies | Alias for `is_platform_admin()` — platform operator |
+| `is_platform_admin()` | RLS policies | Whether `auth.uid()` has `users.is_platform_admin` |
+| `is_org_owner(org_id)` | RLS / limits | Whether `auth.uid()` owns the organization |
+| `can_org_create_game(org_id)` | Game insert | Subscription active and under `max_games` |
+| `can_org_add_player_to_game(game_id)` | `game_players` insert | Under `max_players` for the game's org |

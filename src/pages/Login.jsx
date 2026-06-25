@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { isRegistrationEnabled } from '../config/features';
 
 export default function Login() {
     const { supabase, user } = useAuthContext();
@@ -58,10 +59,21 @@ export default function Login() {
                 </button>
             </form>
 
-            <p className="mt-4 text-4xl  text-center">
-                Don't have an account?{' '}
-                <Link to="/register" className="text-blue-600 hover:underline text-4xl">
-                    Register here
+            {isRegistrationEnabled && (
+                <p className="mt-4 text-4xl  text-center">
+                    Don't have an account?{' '}
+                    <Link
+                        to="/register"
+                        className="text-blue-600 hover:underline text-4xl"
+                    >
+                        Register here
+                    </Link>
+                </p>
+            )}
+
+            <p className="mt-8 text-center text-sm text-gray-500">
+                <Link to="/privacy" className="hover:underline">
+                    Privacy Policy
                 </Link>
             </p>
         </div>

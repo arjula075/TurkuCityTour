@@ -75,6 +75,8 @@ E2E_TEST_USER_EMAIL=you@example.com E2E_TEST_USER_PASSWORD=secret npm run test:e
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `ci.yml` | PR / push to `First-release` | Unit tests, coverage, build, Playwright smoke |
+| `mobile-android.yml` | PR / push to `First-release` | Capacitor Android debug APK (+ optional signed AAB) |
+| `mobile-ios.yml` | PR / push to `First-release` | Capacitor iOS Simulator build |
 | `security.yml` | PR / push to `First-release` | npm audit, secret scan, unit tests |
 | `supabase-integration.yml` | PR / push `First-release` (when secrets set), nightly, manual | Live Supabase RLS regression |
 | `supabase-keepalive.yml` | Mon/Thu cron | Keeps free-tier project active |

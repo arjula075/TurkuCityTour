@@ -38,7 +38,7 @@ maybeDescribeIntegration('Supabase RLS — users', () => {
 
         const { data, error } = await anon
             .from('users')
-            .select('id, first_name, last_name, is_admin')
+            .select('id, first_name, last_name, is_platform_admin')
             .eq('id', testUserId)
             .maybeSingle();
 
@@ -46,18 +46,18 @@ maybeDescribeIntegration('Supabase RLS — users', () => {
         expect(data?.id).toBe(testUserId);
     });
 
-    test('non-admin cannot set is_admin on their own row', async () => {
+    test('non-admin cannot set is_platform_admin on their own row', async () => {
         await signIn(anon, integrationEnv.userEmail, integrationEnv.userPassword);
 
         const { data, error } = await anon
             .from('users')
-            .update({ is_admin: true })
+            .update({ is_platform_admin: true })
             .eq('id', testUserId)
-            .select('is_admin');
+            .select('is_platform_admin');
 
         if (error) {
             expect(error.message).toMatch(
-                /row-level security|permission denied|only admins may change is_admin/i
+                /row-level security|permission denied|only platform admins may change is_platform_admin/i
             );
             return;
         }
@@ -65,18 +65,18 @@ maybeDescribeIntegration('Supabase RLS — users', () => {
         expect(data).toEqual([]);
     });
 
-    test('non-admin cannot set is_admin on another user', async () => {
+    test('non-admin cannot set is_platform_admin on another user', async () => {
         await signIn(anon, integrationEnv.userEmail, integrationEnv.userPassword);
 
         const { data, error } = await anon
             .from('users')
-            .update({ is_admin: true })
+            .update({ is_platform_admin: true })
             .eq('id', adminUserId)
-            .select('is_admin');
+            .select('is_platform_admin');
 
         if (error) {
             expect(error.message).toMatch(
-                /row-level security|permission denied|only admins may change is_admin/i
+                /row-level security|permission denied|only platform admins may change is_platform_admin/i
             );
             return;
         }

@@ -8,7 +8,7 @@ export const e2eUser = {
 export const e2eProfile = {
     first_name: 'E2E',
     last_name: 'Player',
-    is_admin: false,
+    is_platform_admin: false,
     message: 'Have fun in Turku!',
 };
 

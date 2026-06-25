@@ -1,7 +1,8 @@
 // src/pages/Register.jsx
 import React, { useState } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { isRegistrationEnabled } from '../config/features';
 
 export default function Register() {
     const { supabase } = useAuthContext();
@@ -14,6 +15,10 @@ export default function Register() {
         password: '',
     });
     const [error, setError] = useState(null);
+
+    if (!isRegistrationEnabled) {
+        return <Navigate to="/" replace />;
+    }
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });

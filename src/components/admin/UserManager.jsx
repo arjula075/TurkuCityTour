@@ -245,7 +245,7 @@ export default function UserManager() {
                                         return (
                                             <div key={key} className="grid grid-cols-[150px_1fr] gap-2 items-center">
                                                 <label className="font-semibold capitalize">{key.replace('_', ' ')}</label>
-                                                {key === 'is_admin' ? (
+                                                {key === 'is_platform_admin' ? (
                                                     <input
                                                         type="checkbox"
                                                         checked={!!value}

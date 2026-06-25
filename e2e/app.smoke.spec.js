@@ -31,4 +31,11 @@ test.describe('TurkuCityTour smoke', () => {
 
         await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     });
+
+    test('privacy policy page is public', async ({ page }) => {
+        await page.goto('/privacy');
+
+        await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
+        await expect(page.getByRole('link', { name: /back to login/i })).toBeVisible();
+    });
 });

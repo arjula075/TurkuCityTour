@@ -65,12 +65,28 @@ Optional foreground service permission only if background location is implemente
 ## Store compliance (Phase 5)
 
 - Declare **location when in use** in App Store privacy labels and Play Data safety
-- Link a privacy policy covering GPS coordinates and Supabase-stored progress
-- Explain city-tour gameplay in App Review notes
+- In-app privacy policy at `/privacy` (link from login)
+- Store copy templates: `docs/store/app-store-metadata.md`, `docs/store/play-store-metadata.md`
+- TestFlight / release checklist: `docs/store/TESTFLIGHT_CHECKLIST.md`
+- Signing secrets: `docs/store/SIGNING.md`
 
 ## Roadmap
 
-Phases 0–1 are in-repo (Capacitor shell, HashRouter, admin flag, safe-area CSS). Phase 2 adds `@capacitor/geolocation`, lifecycle plugins, and native location permissions — implemented in `useGeolocation.js` and platform manifests. Phase 3+ covers map UX hardening, CI signing, and store submission — see the TurkuCityTour Mobile Plan canvas in Cursor.
+| Phase | Status |
+|-------|--------|
+| 0–1 | Capacitor shell, HashRouter, admin flag, safe-area CSS |
+| 2 | `@capacitor/geolocation`, lifecycle plugins, native permissions |
+| 3 | Map gesture lock, asset prefetch, offline banner, walk-test doc |
+| 4 | `mobile-android.yml`, `mobile-ios.yml`, build scripts |
+| 5 | Privacy page, store metadata templates, submission checklist |
+| 6+ | Offline cache, push, deep links (post-launch) |
+
+### CI workflows
+
+| Workflow | Artifact |
+|----------|----------|
+| `mobile-android.yml` | Debug APK; signed AAB when `ANDROID_SIGNING_ENABLED=true` |
+| `mobile-ios.yml` | Unsigned Simulator `.app` |
 
 ### App icons (Phase 1)
 

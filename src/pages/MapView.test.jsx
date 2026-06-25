@@ -36,6 +36,7 @@ vi.mock('../services/supabaseService', () => ({
     clearUserProgress: vi.fn().mockResolvedValue(undefined),
     validateLocationArrival: vi.fn().mockResolvedValue({ arrived: false }),
     recordLocationGuess: vi.fn().mockResolvedValue({ accepted: true, hints_used: 5 }),
+    recordGiveUp: vi.fn().mockResolvedValue({ hints_used: 0 }),
 }));
 
 vi.mock('react-leaflet', () => ({

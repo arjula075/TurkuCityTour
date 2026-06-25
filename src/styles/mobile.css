@@ -24,4 +24,33 @@
 .auth-page {
     padding-bottom: max(2rem, env(safe-area-inset-bottom));
     scroll-padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    min-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Map is read-only while hint panel is open — prevents accidental pinch-zoom */
+.map-view-only {
+    touch-action: pan-x pan-y;
+}
+
+.map-game-panel {
+    position: relative;
+    z-index: 500;
+    touch-action: manipulation;
+}
+
+.offline-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+    background: #b45309;
+    color: #fff;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 500;
 }

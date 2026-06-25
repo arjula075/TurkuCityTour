@@ -49,6 +49,7 @@ import {
     gameAssignments,
     insertUserProgress,
     recordLocationGuess,
+    recordGiveUp,
     storage,
     submitAnswer,
     updateUserProgress,
@@ -137,6 +138,23 @@ describe('supabaseService', () => {
                 p_longitude: 22.27,
                 p_hints_used: 5,
                 p_tolerance_meters: 100,
+            });
+        });
+    });
+
+    describe('recordGiveUp', () => {
+        it('calls record_give_up RPC', async () => {
+            const { supabase } = await import('./supabaseClient');
+            supabase.rpc.mockResolvedValue({
+                data: { hints_used: 0 },
+                error: null,
+            });
+
+            const result = await recordGiveUp('loc-1');
+
+            expect(result).toEqual({ hints_used: 0 });
+            expect(supabase.rpc).toHaveBeenCalledWith('record_give_up', {
+                p_location_id: 'loc-1',
             });
         });
     });

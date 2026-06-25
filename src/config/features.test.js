@@ -21,4 +21,12 @@ describe('features', () => {
         expect(isMobileBuild).toBe(true);
         vi.unstubAllEnvs();
     });
+
+    it('disables registration when VITE_ENABLE_REGISTRATION is false', async () => {
+        vi.stubEnv('VITE_ENABLE_REGISTRATION', 'false');
+        vi.resetModules();
+        const { isRegistrationEnabled } = await import('./features');
+        expect(isRegistrationEnabled).toBe(false);
+        vi.unstubAllEnvs();
+    });
 });

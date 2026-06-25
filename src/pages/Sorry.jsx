@@ -6,7 +6,7 @@ import { isAdminEnabled } from '../config/features';
 export default function Sorry() {
     const { profile } = useAuthContext();
     const navigate = useNavigate();
-    const showAdminLink = isAdminEnabled && profile?.is_admin;
+    const showAdminLink = isAdminEnabled && profile?.is_platform_admin;
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen-safe page-safe-area text-center">

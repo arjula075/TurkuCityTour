@@ -64,6 +64,15 @@ export async function recordLocationGuess(
     return data;
 }
 
+export async function recordGiveUp(locationId) {
+    const data = await handle(
+        supabase.rpc('record_give_up', {
+            p_location_id: locationId,
+        })
+    );
+    return data;
+}
+
 export const fetchQuestionsAndAnswers = async (locationId) => {
     const questions = await handle(
         supabase.from('questions').select('*').eq('location_id', locationId)
