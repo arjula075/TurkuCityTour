@@ -80,7 +80,9 @@ maybeDescribeIntegration('Supabase RLS — answers', () => {
         ]);
 
         expect(error).not.toBeNull();
-        expect(error.message).toMatch(/row-level security|only admins may insert answers/i);
+        expect(error.message).toMatch(
+            /row-level security|only admins may insert answers|not authorized to insert answers/i
+        );
     });
 
     test('admin user can INSERT and DELETE answers', async () => {

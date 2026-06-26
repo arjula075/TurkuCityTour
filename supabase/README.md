@@ -25,6 +25,9 @@ Recommended order:
 15. `migrations/00015_record_give_up.sql` — server-validated give-up (hints_used = 0)
 16. `migrations/00016_multi_tenant_schema.sql` — organizations, subscriptions, members, `games.owner_org_id`, rename `is_platform_admin`
 17. `migrations/00017_org_tenancy_rls.sql` — org-scoped catalog RLS, subscription limits, tenancy helpers
+18. `migrations/00018_fixup_platform_admin_functions.sql` — repair `is_admin()` after column rename (run if you see `column "is_admin" does not exist`)
+19. `migrations/00019_drop_legacy_is_admin_policies.sql` — remove dashboard policies still referencing `users.is_admin`
+20. `migrations/00020_rebuild_rls_policies.sql` — drop all core RLS policies and recreate (fixes stale `is_admin` refs)
 
 ## Auditing RLS
 

@@ -75,7 +75,9 @@ maybeDescribeIntegration('Supabase RLS — games, locations, game_players', () =
             .insert([{ name: `Blocked game ${fixtureMeta.tag}` }]);
 
         expect(error).not.toBeNull();
-        expect(error.message).toMatch(/row-level security/i);
+        expect(error.message).toMatch(
+            /row-level security|not authorized to create games/i
+        );
     });
 
     test('non-admin cannot create locations', async () => {
@@ -91,6 +93,8 @@ maybeDescribeIntegration('Supabase RLS — games, locations, game_players', () =
         ]);
 
         expect(error).not.toBeNull();
-        expect(error.message).toMatch(/row-level security/i);
+        expect(error.message).toMatch(
+            /row-level security|not authorized/i
+        );
     });
 });
