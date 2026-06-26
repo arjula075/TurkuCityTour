@@ -13,6 +13,7 @@
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "security:scan-secrets": "node scripts/security-scan.mjs",
     "security:verify-headers": "node scripts/verify-security-headers.mjs",
+    "schema:manifest": "node scripts/generate-schema-manifest.mjs",
     "security:test": "vitest run",
     "security:check": "npm run security:audit && npm run security:scan-secrets && npm run security:test",
     "dev": "vite",

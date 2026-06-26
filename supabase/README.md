@@ -8,6 +8,7 @@ Database policies, RPCs, and views live in Supabase. This folder versions them s
 
 Recommended order:
 
+0. `migrations/00000_baseline.sql` — schema inventory (reference only; do not apply)
 1. `migrations/00001_create_user_profile.sql` — harden registration RPC
 2. `migrations/00002_submit_answer.sql` — server-authoritative answer validation
 3. `migrations/00003_is_admin_helper.sql` — `is_admin()` helper for policies
@@ -33,16 +34,25 @@ Recommended order:
 
 After applying `00014`, run `scripts/audit-rls.sql` in the SQL Editor. Any remaining rows are policies outside the `turkucitytour_*` set — review before dropping manually.
 
-## Exporting the live schema (one-time baseline)
+## Exporting the live schema (baseline)
 
-If your project predates this folder, capture the current state from the Supabase Dashboard:
+`migrations/00000_baseline.sql` is a **schema inventory** (tables, views, functions, policies) for PR review. Regenerate after schema changes:
 
-1. **Database → Schema visualizer** or **SQL Editor** — note tables, views, and functions.
-2. With [Supabase CLI](https://supabase.com/docs/guides/cli) linked to the project:
-   ```bash
-   supabase db dump --schema public -f supabase/migrations/00000_baseline.sql
-   ```
-3. Commit the dump, then apply incremental migrations from `00001` onward.
+```bash
+npm run schema:manifest
+```
+
+For a full DDL dump from live Supabase:
+
+```bash
+# Supabase CLI linked to project
+./scripts/dump-baseline-schema.sh
+
+# Or with direct Postgres URL
+DATABASE_URL='postgresql://...' ./scripts/dump-baseline-schema.sh
+```
+
+Incremental migrations `00001` onward are authoritative for security hardening.
 
 ## Tables referenced by the app
 

@@ -11,6 +11,7 @@ import {
     ensureUserProfile,
     seedOrgFixture,
 } from './helpers/fixtures.js';
+import { listAllAuthUsers } from './helpers/authUsers.js';
 
 maybeDescribeIntegration('Supabase RLS — org tenancy', () => {
     let admin;
@@ -28,10 +29,9 @@ maybeDescribeIntegration('Supabase RLS — org tenancy', () => {
         admin = createAdminClient();
         anon = createAnonClient();
 
-        const { data: users, error: listError } = await admin.auth.admin.listUsers();
-        if (listError) throw listError;
+        const users = await listAllAuthUsers(admin);
 
-        hostAId = users.users.find((u) => u.email === integrationEnv.userEmail)?.id;
+        hostAId = users.find((u) => u.email === integrationEnv.userEmail)?.id;
         if (!hostAId) throw new Error('Test user missing');
 
         await ensureUserProfile(admin, hostAId, { firstName: 'Host', lastName: 'A' });

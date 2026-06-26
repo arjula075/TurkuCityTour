@@ -1,0 +1,96 @@
+-- TurkuCityTour baseline schema inventory
+-- Generated: 2026-06-26
+--
+-- This file documents the public schema objects versioned in this repo.
+-- Incremental migrations 00001+ apply security hardening on top of the core schema.
+-- For a full DDL dump from live Supabase: scripts/dump-baseline-schema.sh
+--
+-- Do not apply this file to production — it contains no DDL.
+
+-- Core tables
+--   answers_data
+--   client_logs
+--   game_players
+--   games
+--   hints
+--   images
+--   locations
+--   organization_members
+--   organizations
+--   questions
+--   subscriptions
+--   user_progress
+--   users
+
+-- Views
+--   answers
+
+-- Functions (public)
+--   _wrap_leaderboard_view_for_admin()
+--   answers_view_delete()
+--   answers_view_insert()
+--   answers_view_update()
+--   can_manage_game_catalog()
+--   can_manage_location()
+--   can_manage_question()
+--   can_org_add_player_to_game()
+--   can_org_create_game()
+--   create_user_profile()
+--   enforce_client_logs_rate_limit()
+--   enforce_game_creation_limit()
+--   enforce_game_player_limit()
+--   enforce_user_progress_integrity()
+--   game_org_id()
+--   games_set_default_owner_org()
+--   haversine_meters()
+--   is_admin()
+--   is_org_owner()
+--   is_platform_admin()
+--   org_game_count()
+--   prevent_is_admin_escalation()
+--   prevent_platform_admin_escalation()
+--   record_give_up()
+--   record_location_guess()
+--   submit_answer()
+--   user_org_ids()
+--   validate_location_arrival()
+
+-- RLS policies referenced in migrations
+--   turkucitytour_answers_data_select_player on answers_data
+--   turkucitytour_answers_data_write on answers_data
+--   turkucitytour_client_logs_insert on client_logs
+--   turkucitytour_client_logs_select_admin on client_logs
+--   turkucitytour_game_players_delete on game_players
+--   turkucitytour_game_players_insert on game_players
+--   turkucitytour_game_players_select on game_players
+--   turkucitytour_games_delete on games
+--   turkucitytour_games_insert on games
+--   turkucitytour_games_select_org on games
+--   turkucitytour_games_select_player on games
+--   turkucitytour_games_update on games
+--   turkucitytour_hints_select_player on hints
+--   turkucitytour_hints_write on hints
+--   turkucitytour_images_admin on images
+--   turkucitytour_locations_select_player on locations
+--   turkucitytour_locations_write on locations
+--   turkucitytour_organization_members_select on organization_members
+--   turkucitytour_organization_members_write on organization_members
+--   turkucitytour_organizations_insert on organizations
+--   turkucitytour_organizations_select on organizations
+--   turkucitytour_organizations_update on organizations
+--   turkucitytour_questions_select_player on questions
+--   turkucitytour_questions_write on questions
+--   turkucitytour_storage_delete on storage
+--   turkucitytour_storage_insert on storage
+--   turkucitytour_storage_select on storage
+--   turkucitytour_storage_update on storage
+--   turkucitytour_subscriptions_select on subscriptions
+--   turkucitytour_subscriptions_write on subscriptions
+--   turkucitytour_user_progress_own on user_progress
+--   turkucitytour_users_read_own on users
+--   turkucitytour_users_select on users
+--   turkucitytour_users_update on users
+--   turkucitytour_users_update_own on users
+
+-- Source migrations: 20 files (00001_create_user_profile.sql … 00020_rebuild_rls_policies.sql)
+

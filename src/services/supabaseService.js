@@ -198,7 +198,8 @@ export const fetchLocationsForPlayer = (gameId) =>
             .order('id', { ascending: true })
     );
 
-export const fetchLocationsWithHintsQuestionsAnswers = (gameId) =>
+// Admin catalog load (includes correct_answer and is_correct for editors).
+export const fetchLocationsForAdmin = (gameId) =>
     handle(
         supabase
             .from('locations')

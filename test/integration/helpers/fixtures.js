@@ -1,4 +1,5 @@
 import { integrationEnv } from './env.js';
+import { findAuthUserByEmail, listAllAuthUsers } from './authUsers.js';
 
 const FIXTURE_TAG = `e2e-${Date.now()}`;
 
@@ -14,14 +15,11 @@ export function buildFixtureIds() {
 }
 
 export async function ensureAuthUsers(admin) {
-    const { data: existing, error } = await admin.auth.admin.listUsers();
-    if (error) throw new Error(`Failed to list users: ${error.message}`);
-
     const emails = [integrationEnv.userEmail, integrationEnv.adminEmail];
 
     for (const email of emails) {
-        const exists = existing.users.some((user) => user.email === email);
-        if (exists) continue;
+        const existing = await findAuthUserByEmail(admin, email);
+        if (existing) continue;
 
         const password =
             email === integrationEnv.adminEmail
@@ -35,6 +33,10 @@ export async function ensureAuthUsers(admin) {
         });
 
         if (createError) {
+            const alreadyExists = /already been registered|already exists/i.test(
+                createError.message
+            );
+            if (alreadyExists) continue;
             throw new Error(`Failed to create user ${email}: ${createError.message}`);
         }
     }
@@ -49,10 +51,9 @@ export async function seedGameFixture(admin, { tag, gameName, locationName, owne
 
     if (gameError) throw new Error(`Failed to seed game: ${gameError.message}`);
 
-    const { data: users, error: usersError } = await admin.auth.admin.listUsers();
-    if (usersError) throw new Error(`Failed to list users: ${usersError.message}`);
+    const users = await listAllAuthUsers(admin);
 
-    const testUser = users.users.find((user) => user.email === integrationEnv.userEmail);
+    const testUser = users.find((user) => user.email === integrationEnv.userEmail);
     if (!testUser) throw new Error('Test user not found after ensureAuthUsers');
 
     const { error: playerError } = await admin.from('game_players').insert([

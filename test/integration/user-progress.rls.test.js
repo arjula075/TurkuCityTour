@@ -11,6 +11,7 @@ import {
     ensureAuthUsers,
     seedGameFixture,
 } from './helpers/fixtures.js';
+import { listAllAuthUsers } from './helpers/authUsers.js';
 
 maybeDescribeIntegration('Supabase RLS — user_progress', () => {
     let admin;
@@ -105,10 +106,9 @@ maybeDescribeIntegration('Supabase RLS — user_progress', () => {
     });
 
     test('non-admin cannot upsert progress for another user', async () => {
-        const { data: users, error: usersError } = await admin.auth.admin.listUsers();
-        expect(usersError).toBeNull();
+        const users = await listAllAuthUsers(admin);
 
-        const otherUser = users.users.find(
+        const otherUser = users.find(
             (user) => user.email === integrationEnv.adminEmail
         );
 

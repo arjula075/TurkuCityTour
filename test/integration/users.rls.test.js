@@ -6,6 +6,7 @@ import {
     signOut,
 } from './helpers/clients.js';
 import { ensureAuthUsers } from './helpers/fixtures.js';
+import { listAllAuthUsers } from './helpers/authUsers.js';
 
 maybeDescribeIntegration('Supabase RLS — users', () => {
     let admin;
@@ -18,11 +19,10 @@ maybeDescribeIntegration('Supabase RLS — users', () => {
         anon = createAnonClient();
         await ensureAuthUsers(admin);
 
-        const { data, error } = await admin.auth.admin.listUsers();
-        if (error) throw error;
+        const users = await listAllAuthUsers(admin);
 
-        testUserId = data.users.find((u) => u.email === integrationEnv.userEmail)?.id;
-        adminUserId = data.users.find((u) => u.email === integrationEnv.adminEmail)?.id;
+        testUserId = users.find((u) => u.email === integrationEnv.userEmail)?.id;
+        adminUserId = users.find((u) => u.email === integrationEnv.adminEmail)?.id;
 
         if (!testUserId || !adminUserId) {
             throw new Error('Fixture users missing after ensureAuthUsers');
