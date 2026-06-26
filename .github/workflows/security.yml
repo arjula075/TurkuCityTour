@@ -44,7 +44,11 @@ jobs:
         run: npm run security:test
 
       - name: Verify production security headers
-        if: ${{ secrets.DEPLOY_URL != '' }}
         env:
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
-        run: npm run security:verify-headers
+        run: |
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "DEPLOY_URL secret not set — skipping header verification"
+            exit 0
+          fi
+          npm run security:verify-headers
