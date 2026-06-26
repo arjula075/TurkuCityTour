@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { mockAuthenticatedPlayer } from './helpers/e2eSupabaseMock.js';
+import { appRoute } from './helpers/appRoute.js';
 
 const supabaseUrl = process.env.PLAYWRIGHT_SUPABASE_URL || 'http://127.0.0.1:54321';
 
@@ -9,7 +10,7 @@ test.describe('Map smoke', () => {
     });
 
     test('authenticated player sees the map and start controls', async ({ page }) => {
-        await page.goto('/map');
+        await page.goto(appRoute('/map'));
 
         await expect(page.getByText(/welcome, e2e/i)).toBeVisible();
         await expect(page.getByRole('button', { name: 'Start Game' })).toBeVisible();
@@ -18,7 +19,7 @@ test.describe('Map smoke', () => {
     });
 
     test('starts the game and shows the first hint', async ({ page }) => {
-        await page.goto('/map');
+        await page.goto(appRoute('/map'));
 
         await page.getByRole('button', { name: 'Start Game' }).click();
 

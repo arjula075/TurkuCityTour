@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { appRoute } from './helpers/appRoute.js';
 
 test.describe('TurkuCityTour smoke', () => {
     test('loads the login screen', async ({ page }) => {
-        await page.goto('/');
+        await page.goto(appRoute('/'));
 
         await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
         await expect(page.getByPlaceholder('Email address')).toBeVisible();
@@ -11,7 +12,7 @@ test.describe('TurkuCityTour smoke', () => {
     });
 
     test('navigates from login to register', async ({ page }) => {
-        await page.goto('/');
+        await page.goto(appRoute('/'));
 
         await page.getByRole('link', { name: /register here/i }).click();
 
@@ -21,19 +22,19 @@ test.describe('TurkuCityTour smoke', () => {
     });
 
     test('redirects unknown routes to login', async ({ page }) => {
-        await page.goto('/does-not-exist');
+        await page.goto(appRoute('/does-not-exist'));
 
         await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     });
 
     test('redirects unauthenticated users away from map', async ({ page }) => {
-        await page.goto('/map');
+        await page.goto(appRoute('/map'));
 
         await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
     });
 
     test('privacy policy page is public', async ({ page }) => {
-        await page.goto('/privacy');
+        await page.goto(appRoute('/privacy'));
 
         await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible();
         await expect(page.getByRole('link', { name: /back to login/i })).toBeVisible();

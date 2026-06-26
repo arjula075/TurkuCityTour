@@ -30,6 +30,8 @@ export default defineConfig({
             VITE_SUPABASE_ANON_KEY: process.env.PLAYWRIGHT_SUPABASE_ANON_KEY || 'playwright-anon-key',
             VITE_THUNDERFOREST_API_KEY:
                 process.env.PLAYWRIGHT_THUNDERFOREST_API_KEY || 'playwright-thunderforest-key',
+            VITE_MOBILE_BUILD: process.env.VITE_MOBILE_BUILD || 'false',
+            VITE_ENABLE_ADMIN: process.env.VITE_ENABLE_ADMIN || 'true',
         },
     },
     projects: [

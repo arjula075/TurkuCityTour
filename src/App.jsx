@@ -60,16 +60,16 @@ const playerRoutes = [
         path: '/',
         element: <Login />,
     },
-    ...(isRegistrationEnabled
-        ? [
-    {
-        path: '/register',
-        element: <Register />,
-    },
     {
         path: '/privacy',
         element: <PrivacyPolicy />,
     },
+    ...(isRegistrationEnabled
+        ? [
+              {
+                  path: '/register',
+                  element: <Register />,
+              },
           ]
         : []),
     {

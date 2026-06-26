@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { mockAuthenticatedPlayer } from './helpers/e2eSupabaseMock.js';
+import { appRoute } from './helpers/appRoute.js';
 
 const supabaseUrl = process.env.PLAYWRIGHT_SUPABASE_URL || 'http://127.0.0.1:54321';
 
@@ -9,7 +10,7 @@ test.describe('Map mobile smoke', () => {
     });
 
     test('map is visible on a phone-sized screen', async ({ page }) => {
-        await page.goto('/map');
+        await page.goto(appRoute('/map'));
 
         const map = page.locator('.leaflet-container');
         await expect(map).toBeVisible();
