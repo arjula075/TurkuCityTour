@@ -1,0 +1,16 @@
+---
+description: Remind users to apply any suggested DB/SQL changes manually in Supabase
+alwaysApply: true
+---
+
+# Supabase database changes — manual apply
+
+Whenever you propose **any** database change (including but not limited to: new or altered SQL files under `**/sql/**`, migrations, RPC/functions, triggers, indexes, grants, RLS policies, seed data):
+
+1. **State clearly** that the user must apply that change **themselves** to their live Supabase project (nothing in the repo auto-deploys SQL to Supabase unless they have wired CI/migrations separately).
+2. **Spell out where**: e.g. Supabase Dashboard → **SQL Editor** → paste → **Run**, or their chosen migration runner.
+3. Do **not** imply that merging code or restarting the app is enough unless the SQL has already been run in Supabase.
+
+Short template you may reuse in replies:
+
+> **Database:** Run this SQL manually in your Supabase project (SQL Editor or your migrations). Updating the repo file alone does not change production until you execute it against Supabase.

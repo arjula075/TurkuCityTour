@@ -2,7 +2,7 @@
 
 TurkuCityTour is a GPS quiz game backed by Supabase. Game integrity is enforced by **RPCs + RLS** (migrations `00000`–`00020`).
 
-See the live [security plan canvas](/Users/ari.lahti/.cursor/projects/Users-ari-lahti-WebstormProjects-TurkuCityTour/canvases/turkucitytour-security-plan.canvas.tsx) for the full audit and roadmap.
+See the [security plan canvas](canvases/turkucitytour-security-plan.canvas.tsx) and [product plan canvas](canvases/turkucitytour-product-plan.canvas.tsx) in `canvases/` for the full audit and roadmap.
 
 ## Threat model (summary)
 

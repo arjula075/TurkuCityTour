@@ -9,4 +9,6 @@ This repository should be opened as the **Cursor workspace root** (not from the 
 
 If the agent was started from home/empty-window, ask the user to open this folder via **File → Open Folder** or double-click `TurkuCityTour.code-workspace` in the project root.
 
+Planning canvases and agent rules are versioned in this repo: `canvases/` and `.cursor/rules/`.
+
 Do **not** call `move_agent_to_root` from a home chat — it hangs for 10+ minutes in this environment. Use absolute paths only as a fallback when the user cannot switch workspace.

@@ -11,7 +11,7 @@ npm run dev
 
 Copy `.env.test` from `.env.example` to configure local Supabase credentials (not committed).
 
-Security notes: see [SECURITY.md](SECURITY.md). Database migrations: [supabase/README.md](supabase/README.md). Mobile (Capacitor): [MOBILE.md](MOBILE.md).
+Security notes: see [SECURITY.md](SECURITY.md). Database migrations: [supabase/README.md](supabase/README.md). Mobile (Capacitor): [MOBILE.md](MOBILE.md). Plans: [canvases/](canvases/).
 
 ## Testing
 
